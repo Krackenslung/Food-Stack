@@ -60,7 +60,7 @@
   -webkit-user-drag: none;
 }
 
-/* ✅ LOGO x2 SOLO EN LOGIN/REGISTRO */
+/* LOGO x2 ONLY ON LOGIN/REGISTER */
 .brand--auth .brand-logo-img{
   height: 72px; /* antes ~36 */
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));

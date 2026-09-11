@@ -1,5 +1,5 @@
 flask
-pyodbc
+oracledb
 python-dotenv
 bcrypt
 pyjwt

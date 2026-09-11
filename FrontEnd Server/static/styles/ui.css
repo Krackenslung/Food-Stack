@@ -16,7 +16,9 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("https://scontent-sjc6-1.xx.fbcdn.net/v/t39.30808-6/583903768_1282976457209609_8018502459700026694_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=2a1932&_nc_ohc=taGyPvzjwdwQ7kNvwEXuvgf&_nc_oc=AdnfSw_h_QkyiFWKsVeR0oHsjnqyp16YNCVhiKKbBVs0HBHH2jD0trPOg8HWe7NZsmE&_nc_zt=23&_nc_ht=scontent-sjc6-1.xx&_nc_gid=9rLlo-nNMOjYVVU7cj1h9g&oh=00_AfsKSgJZawW4xgLqvy88aiy6I0V3pxy-1vVEXoMbIerDgg&oe=699C6436") no-repeat center center;
+  /* Antes era un hotlink a la CDN de Facebook con URL firmada y caducidad
+     (oe=...): al vencer, el fondo se quedaba en blanco. Ahora es local. */
+  background: url("/static/images/Grand%20Hotel.jpg") no-repeat center center;
   background-size: cover;
   z-index: -1;
 }

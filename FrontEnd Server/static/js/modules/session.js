@@ -1,12 +1,13 @@
-// ================= AUTENTICACIÓN / SESIÓN =================
-// La fuente de verdad es la cookie httpOnly "auth_token" (backend).
-// sessionStorage("tj_user") es solo un cache para pintar la UI rápido;
-// se valida contra GET /me en cada carga.
+// ================= AUTH / SESSION =================
+// Source of truth is the httpOnly "auth_token" cookie (backend).
+// sessionStorage("tj_user") is just a cache to paint the UI fast;
+// it is validated against GET /me on every load.
 
 import { API_BASE } from "./config.js";
+import { clearFavorites } from "./favorites.js";
 
 // ========================================
-// Obtiene la sesión (cache) del usuario actual
+// Current user session (cache)
 // ========================================
 export function getSession() {
   const userStr = sessionStorage.getItem("tj_user");
@@ -19,22 +20,22 @@ export function getSession() {
 }
 
 // ========================================
-// Guarda la sesión (cache) del usuario
+// Store the user session (cache)
 // ========================================
 export function setSession(user) {
   sessionStorage.setItem("tj_user", JSON.stringify(user));
 }
 
 // ========================================
-// Limpia la sesión del usuario
+// Clear the user session
 // ========================================
 export function clearSession() {
   sessionStorage.removeItem("tj_user");
 }
 
 // ========================================
-// Hidrata la sesión desde el backend (GET /me).
-// Si la cookie es válida, refresca el cache; si no, lo limpia.
+// Hydrate the session from the backend (GET /me).
+// Valid cookie refreshes the cache; otherwise it clears it.
 // ========================================
 export async function hydrateSession() {
   try {
@@ -47,14 +48,14 @@ export async function hydrateSession() {
     clearSession();
     return null;
   } catch (err) {
-    // Backend caído: conserva el cache local como mejor esfuerzo
-    console.warn("No se pudo hidratar la sesión:", err);
+    // Backend down: keep the local cache as best effort
+    console.warn("Could not hydrate the session:", err);
     return getSession();
   }
 }
 
 // ========================================
-// Actualiza la interfaz según el estado de autenticación
+// Update the UI based on auth state
 // ========================================
 export function updateUserInterface() {
   const userbox = document.querySelector(".userbox");
@@ -63,21 +64,21 @@ export function updateUserInterface() {
   const user = getSession();
 
   if (user) {
-    const username = user.name || user.username || "Usuario";
+    const username = user.name || user.username || "User";
     userbox.innerHTML = `
-      <span class="user-name me-2 text-light">👤 ${username}</span>
-      <button id="btnLogout" class="btn btn-light btn-sm">Cerrar sesión</button>
+      <span class="user-name me-2"><i class="bi bi-person-circle"></i> ${username}</span>
+      <button id="btnLogout" class="btn btn-light btn-sm">Sign out</button>
     `;
   } else {
     userbox.innerHTML = `
       <button id="btnRegister" class="btn btn-light btn-sm">Register</button>
-      <button id="btnLogin" class="btn btn-light btn-sm">Iniciar sesión</button>
+      <button id="btnLogin" class="btn btn-light btn-sm">Sign in</button>
     `;
   }
 }
 
 // ========================================
-// Cierra la sesión del usuario actual
+// Sign out the current user
 // ========================================
 export function logout(onDone) {
   fetch(`${API_BASE}/logout`, {
@@ -86,12 +87,13 @@ export function logout(onDone) {
   })
     .then(() => {
       clearSession();
+      clearFavorites();  // favorites belong to the account, not the browser
       updateUserInterface();
 
       if (typeof Swal !== "undefined") {
         Swal.fire({
           icon: "success",
-          title: "Sesión cerrada",
+          title: "Signed out",
           timer: 1200,
           showConfirmButton: false,
         });
@@ -100,8 +102,9 @@ export function logout(onDone) {
       onDone?.();
     })
     .catch((err) => {
-      console.error("Error al cerrar sesión:", err);
+      console.error("Sign out failed:", err);
       clearSession();
+      clearFavorites();
       updateUserInterface();
     });
 }

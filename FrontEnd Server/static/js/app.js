@@ -1,19 +1,27 @@
 // ================= APP ENTRY (/app) =================
-// Punto de entrada del SPA: importa los módulos y conecta los eventos
-// globales. La lógica vive en static/js/modules/.
+// SPA entry point: imports the modules and wires the global
+// events. The logic lives in static/js/modules/.
 
 import { API_KEY } from "./modules/config.js";
-import { toggleFavorite } from "./modules/favorites.js";
+import { toggleFavorite, syncFavorites } from "./modules/favorites.js";
 import { hydrateSession, updateUserInterface, logout } from "./modules/session.js";
 import { setActiveView, getCurrentView, applyFilters } from "./modules/views.js";
 import { HotelsMap } from "./modules/hotelsMap.js";
 import { FavoritesMap } from "./modules/favoritesMap.js";
 
-console.log("app.js cargó ✅");
+console.log("app.js loaded");
 
 // ========================================
-// Refresca la vista activa después de alternar un favorito
+// Refresh the active view after toggling a favorite
 // ========================================
+function notifyFavoriteError(err) {
+  console.error("Favorite:", err);
+
+  if (typeof Swal !== "undefined") {
+    Swal.fire("Favorites", err.message, "warning");
+  }
+}
+
 function afterFavoriteToggle() {
   if (getCurrentView() === "favoritos") {
     FavoritesMap.loadFavorites(API_KEY);
@@ -28,9 +36,17 @@ document.addEventListener("input", (e) => {
   if (["q", "zone", "rating", "price", "service"].includes(e.target?.id)) applyFilters();
 });
 
+// Enter in the search box: same as typing, handy when pasting
+document.addEventListener("keydown", (e) => {
+  if (e.target?.id === "q" && e.key === "Enter") {
+    e.preventDefault();
+    applyFilters();
+  }
+});
+
 document.addEventListener("click", (e) => {
 
-  // ── Autenticación ──────────────────────────────────────────
+  // -- Auth ------------------------------------------------------
   if (e.target?.id === "btnLogin") {
     window.location.href = "/login";
     return;
@@ -46,7 +62,7 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  // ── CTAs de navegación ────────────────────────────────────
+  // -- Navigation CTAs -------------------------------------------
   if (e.target?.id === "btnGoHotels") {
     setActiveView("hoteles");
     return;
@@ -57,7 +73,7 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  // ── Nav switch ────────────────────────────────────────────
+  // -- Nav switch ------------------------------------------------
   const navBtn = e.target?.closest?.(".nav-item");
   if (navBtn) {
     const view = navBtn.getAttribute("data-view");
@@ -65,29 +81,37 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  // ── Toggle favorito – Places API (string place_id) ────────
-  const favPlaceId = e.target?.getAttribute?.("data-fav-place");
+  // -- Toggle favorite - Places API (string place_id) ------------
+  // closest() and not getAttribute(): the click lands on the <i>
+  const favPlaceId = e.target
+    ?.closest?.("[data-fav-place]")
+    ?.getAttribute("data-fav-place");
   if (favPlaceId) {
-    toggleFavorite(favPlaceId);
-    afterFavoriteToggle();
+    // Hits the backend now: on failure (e.g. no session) we skip the refresh
+    toggleFavorite(favPlaceId)
+      .then(afterFavoriteToggle)
+      .catch(notifyFavoriteError);
     return;
   }
 
-  // ── Toggle favorito – ícono dentro del InfoWindow de HotelsMap ──
+  // -- Toggle favorite - icon inside the HotelsMap InfoWindow ----
   if (e.target?.classList?.contains("fav-icon") || e.target?.closest(".fav-icon")) {
     const icon = e.target.classList.contains("fav-icon")
       ? e.target
       : e.target.closest(".fav-icon");
     const placeId = icon.getAttribute("data-pid");
     if (placeId) {
-      const isFav = toggleFavorite(placeId);
-      const heartIcon = icon.querySelector("i");
-      if (heartIcon) {
-        heartIcon.className = isFav
-          ? "bi bi-heart-fill text-danger"
-          : "bi bi-heart text-secondary";
-      }
-      afterFavoriteToggle();
+      toggleFavorite(placeId)
+        .then((isFav) => {
+          const heartIcon = icon.querySelector("i");
+          if (heartIcon) {
+            heartIcon.className = isFav
+              ? "bi bi-heart-fill text-danger"
+              : "bi bi-heart text-secondary";
+          }
+          afterFavoriteToggle();
+        })
+        .catch(notifyFavoriteError);
     }
     return;
   }
@@ -96,9 +120,12 @@ document.addEventListener("click", (e) => {
 // ================= Boot =================
 
 document.addEventListener("DOMContentLoaded", async () => {
-  updateUserInterface();   // pinta rápido desde el cache local
+  updateUserInterface();   // paint fast from the local cache
   setActiveView("inicio");
 
-  await hydrateSession();  // valida la sesión real contra GET /me
+  await hydrateSession();  // validate the real session against GET /me
   updateUserInterface();
+
+  // Favorites belong to the account: loaded once the session is valid
+  await syncFavorites();
 });

@@ -2,6 +2,8 @@ from flask import Flask
 
 from controllers.UserController import user_bp
 from controllers.LocationController import location_bp
+from controllers.FavoriteController import favorite_bp
+from controllers.SupportController import support_bp
 import config
 
 # .\venv\Scripts\activatepython
@@ -15,6 +17,8 @@ def create_app():
     # Blueprints
     app.register_blueprint(user_bp)
     app.register_blueprint(location_bp)
+    app.register_blueprint(favorite_bp)
+    app.register_blueprint(support_bp)
 
     # Root (localhost:5010)
     @app.route('/')

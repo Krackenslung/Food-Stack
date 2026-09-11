@@ -4,11 +4,17 @@ from dotenv import load_dotenv
 # Read env data once for the whole backend (every module imports from here)
 load_dotenv()
 
-# ===== SQL Server =====
-SQL_SERVER = os.getenv("SQL_SERVER")
-SQL_DATABASE = os.getenv("SQL_DATABASE")
-SQL_USER = os.getenv("SQL_USER")
-SQL_PASSWORD = os.getenv("SQL_PASSWORD")
+# ===== Oracle Autonomous Database =====
+# Requires mTLS: no wallet, no connection
+ORACLE_USER = os.getenv("ORACLE_USER", "ADMIN")
+ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
+
+# Alias from the wallet's tnsnames.ora (_high | _medium | _low)
+ORACLE_DSN = os.getenv("ORACLE_DSN", "tjhotels_low")
+
+# Folder where the wallet was unzipped (never versioned)
+ORACLE_WALLET_DIR = os.getenv("ORACLE_WALLET_DIR")
+ORACLE_WALLET_PASSWORD = os.getenv("ORACLE_WALLET_PASSWORD")
 
 # ===== Auth =====
 # JWT signing secret — must come from .env, never hardcoded

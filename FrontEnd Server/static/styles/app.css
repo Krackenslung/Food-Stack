@@ -10,7 +10,10 @@
   grid-template-columns: 260px 1fr;
   gap: 18px;
   padding: 18px;
-  min-height: 100vh;
+
+  /* Exact height: with min-height the padding added 36px and scrolled */
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -77,14 +80,13 @@
   border-color: rgba(59,130,246,.22);
 }
 
-.side-footer{ margin-top:auto; }
-
 /* Content */
 .content{
   display:flex;
   flex-direction:column;
   gap:14px;
   min-width: 0;
+  min-height: 0;   /* otherwise the content overflows the shell */
 }
 
 .topbar{
@@ -150,26 +152,32 @@
 }
 
 /* Views */
-.views{ min-width:0; }
+/* .views takes the remaining height */
+.views{
+  min-width: 0;
+  flex: 1;
+  min-height: 0;
+}
+
 .view{ display:none; }
-.view.active{ display:block; }
+.view.active{ display:block; height: 100%; }
 
-.view-card{
-  animation: fadeUp .25s ease both;
+/* Inicio and Soporte scroll their panel, not the page */
+#view-inicio.active,
+#view-soporte.active{
+  overflow-y: auto;
 }
 
-@keyframes fadeUp{
-  from{ opacity:0; transform: translateY(6px); }
-  to{ opacity:1; transform: translateY(0); }
-}
-
-/* Grid principal */
+/* Main grid */
 .grid{
   display:grid;
   grid-template-columns: 420px 1fr;
   gap: 14px;
-  height: calc(100vh - 170px);
-  min-height: 420px;
+
+  /* Was calc(100vh - 170px), but the real value is 202px. The
+     container flex handles it now. */
+  height: 100%;
+  min-height: 0;
 }
 
 .list,
@@ -201,53 +209,15 @@
   gap:10px;
 }
 
-.card-hotel{
-  display:grid;
-  grid-template-columns: 86px 1fr auto;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.06);
-  background: rgba(255,255,255,.65);
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-
-.card-hotel:hover{
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.10);
-}
-
-.thumb{
-  width:86px;
-  height:86px;
-  border-radius: 14px;
-  background: rgba(59,130,246,.10);
-  display:grid;
-  place-items:center;
-  font-size: 26px;
-}
-
-.meta .title{
-  font-weight:700;
-  margin-bottom: 2px;
-}
-
-.meta .sub{
-  font-size: 12px;
-  color: rgba(0,0,0,.55);
-}
-
-.meta .price{
-  font-weight:700;
-  margin-top: 6px;
-}
-
 /* Map */
 .map{
   padding: 12px;
   overflow:hidden;
   display:flex;
   flex-direction:column;
+
+  /* anchor for the floating button */
+  position: relative;
 }
 
 .map-head{
@@ -257,19 +227,21 @@
   padding: 6px 4px 10px;
 }
 
-.map-canvas{
-  flex:1;
-  min-height: 0;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.06);
-  overflow:hidden;
-  background: #e8efff;
-}
-
 /* Responsive */
 @media (max-width: 992px){
+  /* On mobile we stack and let the page scroll */
   .app-shell{
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .view.active{
+    height: auto;
+  }
+  #view-inicio.active,
+  #view-soporte.active{
+    overflow-y: visible;
   }
   .sidebar{
     position: static;
@@ -285,7 +257,7 @@
 
 .hero{
   position: relative;
-  height: 320px;     /* antes 240px */
+  height: 320px;     /* was 240px */
   overflow: hidden;
 }
 
@@ -293,7 +265,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;  /* sube el encuadre (antes 35%) */
+  object-position: center 18%;  /* raises the framing (was 35%) */
   filter: brightness(.95);
 }
 
@@ -304,12 +276,20 @@
   flex-direction:column;
   justify-content:flex-end;
   padding: 22px 28px;
-  background: linear-gradient(
-    to top,
-    rgba(0,0,0,.75),
-    rgba(0,0,0,.35) 55%,
-    rgba(0,0,0,0) 100%
-  );
+  /* Two layers: vertical + side, the text was lost against the sky */
+  background:
+    linear-gradient(
+      to top,
+      rgba(0,0,0,.85),
+      rgba(0,0,0,.55) 45%,
+      rgba(0,0,0,.15) 75%,
+      rgba(0,0,0,0) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(0,0,0,.55),
+      rgba(0,0,0,0) 60%
+    );
 }
 
 .hero-title{
@@ -336,11 +316,6 @@
 
 /* ================= FEATURED CAROUSEL (LOOP REAL) ================= */
 
-.featured-section{
-  position: relative;
-  padding: 28px 24px 40px;  /* más aire vertical */
-}
-
 .featured-title{
   font-weight: 600;
   font-size: 1.05rem;
@@ -353,7 +328,7 @@
 
   padding: 4px 6px;
 
-  /* fade premium compatible con Chrome */
+  /* fade compatible with Chrome */
 -webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
 mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
 }
@@ -363,7 +338,7 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   width: max-content;
   will-change: transform;
 
-  /* importante: NO uses gap aquí para el truco del -50% */
+  /* important: do NOT use gap here, it breaks the -50% trick */
   gap: 0;
 
   animation: scrollFeatured 32s linear infinite;
@@ -376,58 +351,115 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
 .track-group{
   display: flex;
   align-items: stretch;
-  gap: 28px;          /* espacio entre cards */
-  flex: 0 0 auto;     /* evita que el grupo intente estirarse */
+  gap: 28px;          /* space between cards */
+  flex: 0 0 auto;     /* keeps the group from stretching */
 }
 
-/* separación exacta entre grupo1 y grupo2 */
+/* exact gap between group 1 and group 2 */
 .track-group:first-child{
   margin-right: 18px;
 }
 
-/* Cards */
-.mini-card{
+/* ===== Featured hotel card =====
+   Emitted by featured-places.js with no rules at all: they rendered
+   as bare blue underlined <a>. */
+.featured-card{
   flex: 0 0 auto;
-  width: 300px;        /* antes 220 */
+  width: 300px;
   border-radius: 18px;
   overflow: hidden;
   background: #fff;
   box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,.06);
+  display: flex;
+  flex-direction: column;
+
+  /* it is an <a>: kill Bootstrap's blue and underline */
+  text-decoration: none;
+  color: inherit;
+
   transition: transform .25s ease, box-shadow .25s ease;
 }
 
-.mini-card:hover{
+.featured-card:hover,
+.featured-card:focus{
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  text-decoration: none;
+  color: inherit;
 }
 
-.mini-card img{
+.featured-cover{
   width: 100%;
-  height: 200px;       /* antes 130 */
+  height: 170px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: #eef2f7;
+}
+
+.featured-img{
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.mini-caption{
-  padding: 10px 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
+/* Fallback when Places has no photo (the emoji div) */
+.featured-img.placeholder{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+}
+
+.featured-body{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px 16px;
+  min-width: 0;
+}
+
+.featured-name{
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25;
+
+  /* two fixed lines: long names throw off the height otherwise */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.5em;
+}
+
+.featured-meta{
+  font-size: .85rem;
+  color: #5b6472;
+}
+
+.featured-addr{
+  font-size: .8rem;
+  color: #8a93a2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Loop perfecto: 2 grupos idénticos */
+/* Carried .text-light from the dark topbar era: invisible now */
+.user-name{
+  color: #1f2a3d;
+  font-weight: 600;
+}
+
+/* Perfect loop: 2 identical groups */
 @keyframes scrollFeatured{
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
 /* ================= REVIEWS CAROUSEL (LOOP REAL) ================= */
-
-.reviews-section{
-  position: relative;
-}
 
 .reviews-title{
   font-weight: 600;
@@ -451,7 +483,7 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   width:max-content;
   will-change: transform;
 
-  /* igual que featured: SIN gap aquí */
+  /* same as featured: NO gap here */
   gap: 0;
 
   /* para que vaya “opuesto” al de arriba */
@@ -471,12 +503,12 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   flex: 0 0 auto;
 }
 
-/* separación exacta entre grupo1 y grupo2 */
+/* exact gap between group 1 and group 2 */
 .reviews-group:first-child{
   margin-right: 18px;
 }
 
-/* Tarjeta de review (compacta, premium, no gigante) */
+/* Review card (compact, not oversized) */
 .review-card{
   flex: 0 0 auto;
   width: 360px;
@@ -497,7 +529,7 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
-/* Avatar pequeño (el problema principal era que no tenía tamaño fijo) */
+/* Small avatar (the main issue was it had no fixed size) */
 .review-avatar{
   width: 44px;
   height: 44px;
@@ -508,7 +540,7 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   border: 1px solid rgba(0,0,0,.08);
 }
 
-/* Texto */
+/* Text */
 .review-meta{
   min-width: 0;
 }
@@ -525,7 +557,7 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   line-height: 1.25;
 }
 
-/* Loop perfecto: 2 grupos idénticos */
+/* Perfect loop: 2 identical groups */
 @keyframes scrollReviews{
   0%   { transform: translateX(-50%); }
   100% { transform: translateX(0); }
@@ -538,65 +570,229 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   gap:10px;
 }
 
+/* With icons, "Favoritos" and "Recargar" wrapped onto two lines */
+.list-actions .btn{
+  white-space: nowrap;
+}
+
+.list-head > div:first-child{
+  min-width: 0;
+}
+
+.list-head .text-muted{
+  white-space: nowrap;
+}
+
 .list-actions select{
   width: 110px;
 }
 
-/* ===== Botón flotante en mapa ===== */
-.map-canvas{
-  position: relative; /* necesario para el FAB */
-}
-
-.map-fab{
-  position:absolute;
-  right: 14px;
-  bottom: 14px;
-  z-index: 5;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.90);
-  box-shadow: 0 14px 30px rgba(0,0,0,.18);
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-  transition: transform .15s ease, box-shadow .2s ease;
-}
-
-.map-fab:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.22);
-}
-
-.map-canvas { position: relative; }
-
-.map-fab{
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  z-index: 5;
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,.12);
-  background: rgba(255,255,255,.95);
-  box-shadow: 0 10px 22px rgba(0,0,0,.12);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-.map-fab:hover{ transform: translateY(-1px); }
-
+/* ===== Map floating button ===== */
 /* ====== Map floating action button ====== */
+/* ================= HOTEL CARD (Hoteles / Favoritos) =================
+   These used to be inline styles inside the JS and the two views
+   drifted apart. */
+
+.card-hotel{
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid #e6e9ef;
+  border-radius: 12px;
+  background: #fff;
+
+  /* even height: a 2-line title threw off its neighbors */
+  min-height: 150px;
+
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card-hotel:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.10);
+}
+
+.card-hotel__side{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.card-hotel__thumb{
+  width: 90px;
+  height: 90px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-hotel__img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-hotel__btn{
+  width: 90px;
+  font-size: 11px;
+}
+
+/* Hotel with no website: hotelsMap.js flags it when details arrive */
+.card-hotel__btn.is-disabled{
+  opacity: .5;
+  pointer-events: none;
+}
+
+.card-hotel__body{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card-hotel__head{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.card-hotel__title{
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-hotel__fav{
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6c757d;
+  transition: transform .15s ease, color .15s ease;
+}
+
+.card-hotel__fav:hover{
+  transform: scale(1.12);
+}
+
+.card-hotel__fav.is-active{
+  color: #dc3545;
+}
+
+.card-hotel__meta{
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.card-hotel__addr{
+  font-size: 13px;
+  color: #999;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ================= INFOWINDOW CARD ================= */
+
+.hotel-info{
+  position: relative;   /* the heart sits absolutely on top */
+  width: 18rem;
+  max-width: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hotel-info__img{
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.hotel-info__body{
+  padding: 1rem;
+  max-width: 240px;
+}
+
+/* El popup completo (con foto) si puede ser mas ancho */
+.hotel-info .hotel-info__body{
+  max-width: none;
+}
+
+.hotel-info__fav{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hotel-info__title{
+  margin: 0 0 .25rem;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.hotel-info__addr{
+  margin: 0 0 .5rem;
+  font-size: 12px;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+.hotel-info__meta{
+  margin: 0 0 .75rem;
+  font-size: 13px;
+}
+
+.hotel-info__actions{
+  display: flex;
+  gap: .5rem;
+}
+
+/* ====== Map floating button ======
+   It was defined three times with different sizes. */
 .map-canvas{
-  position: relative; /* necesario para que el botón flote dentro */
+  /* flex:1 + min-height:0 give it height: without them the canvas
+     collapses to 0 and the map disappears */
+  flex: 1;
+  min-height: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.06);
+  overflow: hidden;
+  background: #e8efff;
+  position: relative;
 }
 
 .map-fab{
   position: absolute;
-  right: 14px;
-  bottom: 14px;
+  right: 26px;
+  bottom: 26px;
+  z-index: 5;
   width: 44px;
   height: 44px;
   border-radius: 999px;
@@ -606,9 +802,10 @@ mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparen
   display: grid;
   place-items: center;
   cursor: pointer;
-  z-index: 5;
+  transition: transform .15s ease, box-shadow .2s ease;
 }
 
 .map-fab:hover{
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.22);
 }

@@ -1,11 +1,11 @@
 // ================= FAVORITOS MAP MODULE =================
 
 // ========================================
-// Módulo para gestionar el mapa de favoritos (Places API real)
+// Favorites map (real Places API)
 // ========================================
 
 import { $ } from "./dom.js";
-import { getFavs } from "./favorites.js";
+import { getFavs, syncFavorites } from "./favorites.js";
 import { filterPlaces } from "./placeFilters.js";
 import { DEFAULT_CENTER } from "./config.js";
 
@@ -15,10 +15,10 @@ let placesData = [];
 let markers = [];
 
 // ----------------------------------------
-// Carga y muestra los favoritos en el mapa
+// Load and render the favorites on the map
 // ----------------------------------------
 async function loadFavorites(apiKey) {
-  // Reutiliza el loader compartido (una sola inyección del script de Maps)
+  // Reuse the shared loader (Maps script injected only once)
   await window.loadGoogleMapsOnce({ apiKey, libraries: "places" });
 
   const mapDiv = $("favoritesMap") || $("map");
@@ -35,6 +35,9 @@ async function loadFavorites(apiKey) {
   }
 
   service = new google.maps.places.PlacesService(map);
+
+  // Re-read from the DB on open, in case they changed elsewhere
+  await syncFavorites();
 
   const favIds = getFavs();
   if (favIds.size === 0) {
@@ -58,7 +61,7 @@ async function loadFavorites(apiKey) {
           if (status === google.maps.places.PlacesServiceStatus.OK) {
             resolve(place);
           } else {
-            console.warn(`Error cargando place_id ${placeId}:`, status);
+            console.warn(`Error loading place_id ${placeId}:`, status);
             resolve(null);
           }
         }
@@ -73,7 +76,7 @@ async function loadFavorites(apiKey) {
 }
 
 // ----------------------------------------
-// Aplica los filtros de la UI sobre los favoritos cargados
+// Apply the UI filters to the loaded favorites
 // ----------------------------------------
 function applyClientFilters() {
   const list = filterPlaces(placesData);
@@ -82,7 +85,7 @@ function applyClientFilters() {
 }
 
 // ----------------------------------------
-// Renderiza los marcadores en el mapa de favoritos
+// Render the markers on the favorites map
 // ----------------------------------------
 function renderMarkers(places) {
   markers.forEach((m) => m.setMap(null));
@@ -108,7 +111,7 @@ function renderMarkers(places) {
     marker.addListener("click", () => {
       const photoUrl =
         place.photos?.[0]?.getUrl({ maxWidth: 400 }) ||
-        "https://via.placeholder.com/400x300?text=Hotel";
+        "/static/images/Grand%20Hotel.jpg";
       const rating = place.rating || "N/A";
       const total = place.user_ratings_total || 0;
       const vicinity = place.vicinity || place.formatted_address || "";
@@ -116,13 +119,16 @@ function renderMarkers(places) {
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${encodeURIComponent(place.place_id)}`;
 
       infoWindow.setContent(`
-        <div class="card" style="width:18rem;max-width:300px;border-radius:12px;overflow:hidden;">
-          <img src="${photoUrl}" alt="${place.name}" style="width:100%;height:160px;object-fit:cover;display:block;">
-          <div class="card-body p-3">
-            <h6 class="card-title mb-1" style="font-weight:700;font-size:1rem;">${place.name}</h6>
-            <p class="mb-2" style="font-size:12px;color:#6c757d;line-height:1.3;">${vicinity}</p>
-            <p class="mb-3" style="font-size:13px;">⭐ ${rating} <small class="text-muted">(${total})</small></p>
-            <div class="d-flex gap-2">
+        <div class="hotel-info">
+          <img class="hotel-info__img" src="${photoUrl}" alt="${place.name}">
+          <div class="hotel-info__body">
+            <h6 class="hotel-info__title">${place.name}</h6>
+            <p class="hotel-info__addr">${vicinity}</p>
+            <p class="hotel-info__meta">
+              <i class="bi bi-star-fill text-warning"></i> ${rating}
+              <small class="text-muted">(${total})</small>
+            </p>
+            <div class="hotel-info__actions">
               ${
                 website
                   ? `<a href="${website}" target="_blank" rel="noopener" class="btn btn-primary btn-sm flex-fill">Website</a>`
@@ -146,7 +152,7 @@ function renderMarkers(places) {
 }
 
 // ----------------------------------------
-// Renderiza las tarjetas de favoritos en el panel lateral
+// Render the favorite cards in the side panel
 // ----------------------------------------
 function renderFavoritesCards(places) {
   const cards = $("cards");
@@ -154,12 +160,23 @@ function renderFavoritesCards(places) {
 
   if (!cards || !count) return;
 
-  count.textContent = `${places.length} favoritos`;
+  count.textContent = `${places.length} favorites`;
 
   if (places.length === 0) {
+    const term = document.getElementById("q")?.value.trim() || "";
+
+    // placesData is ALL favorites; places is already filtered
+    if (term && placesData.length) {
+      const msg = document.createElement("div");
+      msg.className = "text-muted small p-3";
+      msg.textContent = `None of your favorites match "${term}".`;
+      cards.replaceChildren(msg);
+      return;
+    }
+
     cards.innerHTML = `
       <div class="text-muted small p-3">
-        No tienes favoritos guardados aún. Explora hoteles y agrégalos con ❤️
+        No favorites saved yet. Explore hotels and add them with <i class="bi bi-heart"></i>
       </div>
     `;
     return;
@@ -171,7 +188,7 @@ function renderFavoritesCards(places) {
     .map((place) => {
       const photoUrl =
         place.photos?.[0]?.getUrl({ maxWidth: 400 }) ||
-        "https://via.placeholder.com/90x90?text=Hotel";
+        "/static/images/Grand%20Hotel.jpg";
       const rating = place.rating || "N/A";
       const reviews = place.user_ratings_total || 0;
       const address = place.formatted_address || "";
@@ -179,31 +196,32 @@ function renderFavoritesCards(places) {
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${encodeURIComponent(place.place_id)}`;
 
       return `
-      <div class="card-hotel" style="border:1px solid #ddd;border-radius:8px;padding:15px;margin-bottom:10px;display:flex;gap:15px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100px;flex-shrink:0;">
-          <div class="thumb" style="width:90px;height:90px;overflow:hidden;border-radius:8px;background:#f0f0f0;">
-            <img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" alt="${place.name}">
+      <div class="card-hotel">
+        <div class="card-hotel__side">
+          <div class="card-hotel__thumb">
+            <img class="card-hotel__img" src="${photoUrl}" alt="${place.name}">
           </div>
           ${
             place.website
-              ? `<a class="btn btn-outline-primary btn-sm" style="width:90px;font-size:11px;" href="${place.website}" target="_blank" rel="noopener">Website</a>`
-              : `<button class="btn btn-outline-secondary btn-sm" style="width:90px;font-size:11px;" disabled>Sin sitio</button>`
+              ? `<a class="btn btn-outline-primary btn-sm card-hotel__btn" href="${place.website}" target="_blank" rel="noopener">Website</a>`
+              : `<button class="btn btn-outline-secondary btn-sm card-hotel__btn" disabled>Sin sitio</button>`
           }
-          <a class="btn btn-outline-secondary btn-sm" style="width:90px;font-size:11px;" href="${mapsUrl}" target="_blank" rel="noopener">Maps</a>
+          <a class="btn btn-outline-secondary btn-sm card-hotel__btn" href="${mapsUrl}" target="_blank" rel="noopener">Maps</a>
         </div>
-        <div style="flex:1;display:flex;flex-direction:column;">
-          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-            <h5 style="font-size:18px;font-weight:600;margin:0;padding-right:10px;">${place.name}</h5>
-            <button class="btn btn-link p-0" style="font-size:20px;color:${isFav ? "#dc3545" : "#6c757d"};"
-                    data-fav-place="${place.place_id}" type="button">
-              ${isFav ? "❤️" : "🤍"}
+        <div class="card-hotel__body">
+          <div class="card-hotel__head">
+            <h5 class="card-hotel__title">${place.name}</h5>
+            <button class="card-hotel__fav${isFav ? " is-active" : ""}"
+                    data-fav-place="${place.place_id}" type="button"
+                    aria-label="${isFav ? "Remove from favorites" : "Add to favorites"}">
+              <i class="bi ${isFav ? "bi-heart-fill" : "bi-heart"}"></i>
             </button>
           </div>
-          <div style="font-size:14px;color:#666;margin-bottom:5px;">
-            ⭐ ${rating} • (${Number(reviews).toLocaleString()})
+          <div class="card-hotel__meta">
+            <i class="bi bi-star-fill text-warning"></i> ${rating} • (${Number(reviews).toLocaleString()})
           </div>
-          <div style="font-size:13px;color:#999;">
-            📍 ${address}
+          <div class="card-hotel__addr">
+            <i class="bi bi-geo-alt"></i> ${address}
           </div>
         </div>
       </div>
@@ -212,7 +230,7 @@ function renderFavoritesCards(places) {
     .join("");
 }
 
-// ── API pública ───────────────────────────────────────────
+// -- Public API ---------------------------------------------────────────────
 export const FavoritesMap = {
   loadFavorites,
   applyClientFilters,

@@ -1,19 +1,73 @@
-// Hoteles destacados (Inicio) usando Places Nearby Search
+// Featured hotels (Inicio) using Places
 window.FeaturedPlaces = (function () {
   const DEFAULT_CENTER = { lat: 32.5149, lng: -117.0382 }; // Tijuana fallback
-  const RADIUS_METERS = 4500; // destacado "cerca" del centro
   const MAX_ITEMS = 10;
 
+  // Search in stages and stop at MAX_ITEMS distinct hotels: a fixed
+  // radius only returned 1 or 2 real hotels
+  const SEARCH_RADII = [5000, 10000, 20000];
+  const MAX_RADIUS = SEARCH_RADII[SEARCH_RADII.length - 1];
+  const GRID_STEP_METERS = 7000;
+
   // Reviews (Place Details)
-  const DEFAULT_MAX_REVIEW_CARDS = 10;     // cuántas tarjetas salen en el carrusel
-  const DEFAULT_MAX_HOTELS_FOR_REVIEWS = 6; // de cuántos hoteles destacados jalamos reviews
+  const DEFAULT_MAX_REVIEW_CARDS = 10;     // how many cards the carousel shows
+  const DEFAULT_MAX_HOTELS_FOR_REVIEWS = 6; // how many featured hotels we pull reviews from
   const FALLBACK_AVATAR_WOMAN = "/static/images/woman-user-circle-icon.webp";
   const FALLBACK_AVATAR_MAN = "/static/images/man-user-circle-icon.webp";
 
   let hiddenMap = null;
-  let lastFeaturedPlaces = []; // <- memoria de destacados (para reviews)
+  let lastFeaturedPlaces = []; // <- featured memory (for reviews)
 
   function $(id) { return document.getElementById(id); }
+
+  // Quality score: rating weighted by how many people voted.
+  // Raw rating alone put a 5-star hotel with 3 reviews above the Grand
+  // Hotel with 6,315. log10 dampens the vote count so a huge hotel does
+  // not bury a good small one either.
+  function qualityScore(place) {
+    const rating = Number(place?.rating ?? 0);
+    const votes = Number(place?.user_ratings_total ?? 0);
+    return rating * Math.log10(votes + 1);
+  }
+
+  // Drop houses and gated communities without reviews
+  function hasReviews(place) {
+    return Number(place?.user_ratings_total ?? 0) > 0;
+  }
+
+  // textSearch("hotel") also returns restaurants, spas and agencies.
+  function isLodging(place) {
+    return (place?.types || []).includes("lodging");
+  }
+
+  // NOTE: San Diego hotels slip in, so we filter by address
+  function isInMexico(place) {
+    const addr = String(place?.formatted_address || place?.vicinity || "");
+
+    if (/(EE\.\s?UU\.|U\.?S\.?A\.?|United States|Estados Unidos)/i.test(addr)) {
+      return false;
+    }
+
+    return /m[eé]xico/i.test(addr);
+  }
+
+  // Haversine: the loader only requests "places", no "geometry"
+  function distanceMeters(center, latLng) {
+    const R = 6371000;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+
+    const lat = typeof latLng.lat === "function" ? latLng.lat() : latLng.lat;
+    const lng = typeof latLng.lng === "function" ? latLng.lng() : latLng.lng;
+
+    const dLat = toRad(lat - center.lat);
+    const dLng = toRad(lng - center.lng);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(center.lat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
 
   function setNote(msg) {
     const note = $("featuredNote");
@@ -40,7 +94,7 @@ window.FeaturedPlaces = (function () {
   function ensureHiddenMap(center) {
     if (hiddenMap) return hiddenMap;
 
-    // PlacesService necesita un Map o un DIV.
+    // PlacesService needs a Map or a DIV.
     const div = document.createElement("div");
     div.style.width = "1px";
     div.style.height = "1px";
@@ -94,7 +148,7 @@ window.FeaturedPlaces = (function () {
         <div class="featured-cover">${cover}</div>
         <div class="featured-body">
           <div class="featured-name">${escapeHtml(name)}</div>
-          <div class="featured-meta">⭐ ${escapeHtml(rating)} • (${Number(reviews).toLocaleString()})</div>
+          <div class="featured-meta"><i class="bi bi-star-fill text-warning"></i> ${escapeHtml(rating)} • (${Number(reviews).toLocaleString()})</div>
           <div class="featured-addr">${escapeHtml(addr)}</div>
         </div>
       </a>
@@ -107,53 +161,138 @@ window.FeaturedPlaces = (function () {
     if (!group || !clone) return;
 
     if (!places.length) {
-      group.innerHTML = `<div class="text-muted small p-3">No hay destacados por ahora.</div>`;
+      group.innerHTML = `<div class="text-muted small p-3">No featured hotels right now.</div>`;
       clone.innerHTML = "";
       return;
     }
 
     const html = places.map(buildCard).join("");
     group.innerHTML = html;
-    clone.innerHTML = html; // loop perfecto
+    clone.innerHTML = html; // perfect loop
   }
 
-  function nearbyHotels(center) {
-    return new Promise((resolve, reject) => {
-      const map = ensureHiddenMap(center);
-      const service = new google.maps.places.PlacesService(map);
+  // textSearch and not nearbySearch: the latter caps at 60 and in dense
+  // areas those are private homes, hiding the real hotels
+  // Desplaza un punto N metros al norte y M al este
+  function offsetLatLng(center, north, east) {
+    const M_PER_DEG_LAT = 111320;
+    const latRad = (center.lat * Math.PI) / 180;
 
-      service.nearbySearch(
-        { location: center, radius: RADIUS_METERS, type: "lodging" },
+    return {
+      lat: center.lat + north / M_PER_DEG_LAT,
+      lng: center.lng + east / (M_PER_DEG_LAT * Math.cos(latRad)),
+    };
+  }
+
+  // Una consulta de textSearch (primera pagina)
+  function textSearchOnce(service, center, radius) {
+    return new Promise((resolve, reject) => {
+      service.textSearch(
+        { location: center, radius, query: "hotel" },
         (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK) return resolve(results || []);
-          if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) return resolve([]);
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            return resolve(results || []);
+          }
+          if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+            return resolve([]);
+          }
           reject(new Error("Places error: " + status));
         }
       );
     });
   }
 
+  // Busca hoteles hasta juntar MAX_ITEMS distintos.
+  // Primero amplia el radio por etapas (lo cercano tiene prioridad) y, si
+  // aun faltan, reparte consultas en una rejilla: textSearch devuelve 20
+  // por consulta, asi que la unica forma de encontrar mas es preguntar en
+  // varios puntos.
+  async function nearbyHotels(center) {
+    const map = ensureHiddenMap(center);
+    const service = new google.maps.places.PlacesService(map);
+
+    const all = [];
+    const seen = new Set();
+    let lastError = null;
+
+    const collect = (results, limit) => {
+      (results || []).forEach((p) => {
+        const id = p.place_id;
+        if (id && seen.has(id)) return;
+
+        const loc = p.geometry?.location;
+        if (!loc) return;
+
+        if (distanceMeters(center, loc) > limit) return;
+        if (!isLodging(p)) return;
+        if (!hasReviews(p)) return;
+        if (!isInMexico(p)) return;
+
+        if (id) seen.add(id);
+        all.push(p);
+      });
+    };
+
+    const probe = async (point, radius, limit) => {
+      try {
+        collect(await textSearchOnce(service, point, radius), limit);
+      } catch (err) {
+        // Un sondeo que falla no debe tirar toda la busqueda
+        lastError = err;
+      }
+    };
+
+    // Etapa 1: ampliar el radio desde el centro
+    for (const radius of SEARCH_RADII) {
+      await probe(center, radius, radius);
+      if (all.length >= MAX_ITEMS) return all;
+    }
+
+    // Etapa 2: rejilla, solo si aun faltan hoteles
+    const steps = Math.ceil(MAX_RADIUS / GRID_STEP_METERS);
+    for (let i = -steps; i <= steps; i++) {
+      for (let j = -steps; j <= steps; j++) {
+        if (i === 0 && j === 0) continue;
+
+        const point = offsetLatLng(center, i * GRID_STEP_METERS, j * GRID_STEP_METERS);
+        if (distanceMeters(center, point) > MAX_RADIUS) continue;
+
+        await probe(point, GRID_STEP_METERS, MAX_RADIUS);
+        if (all.length >= MAX_ITEMS) return all;
+      }
+    }
+
+    if (!all.length && lastError) throw lastError;
+
+    return all;
+  }
+
   async function init() {
-    setNote("Cargando hoteles destacados desde Places...");
+    setNote("Loading featured hotels from Places...");
 
     try {
       const center = await getUserLocation();
       const results = await nearbyHotels(center);
 
-      // Orden simple: mejor rating primero (si existe)
+      // Simple order: best rating first (when present)
       const sorted = (results || [])
-        .slice()
-        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+        .sort((a, b) => qualityScore(b) - qualityScore(a))
         .slice(0, MAX_ITEMS);
 
-      lastFeaturedPlaces = sorted; // <- guardamos para reviews
+      lastFeaturedPlaces = sorted; // <- kept for reviews
 
       render(sorted);
-setNote("");    } catch (err) {
+      setNote("");
+
+      // Report the outcome: the caller cannot tell success from failure
+      // if we swallow the error here and return undefined.
+      return { ok: true, count: sorted.length };
+    } catch (err) {
       console.error("[FeaturedPlaces] error:", err);
-      setNote("No se pudieron cargar los destacados (Places). Revisa la consola.");
+      setNote("Could not load featured hotels (Places). Check the console.");
       lastFeaturedPlaces = [];
       render([]);
+      return { ok: false, count: 0 };
     }
   }
 
@@ -173,7 +312,7 @@ setNote("");    } catch (err) {
   }
 
   function pickFallbackAvatar(authorName) {
-    // Simple alternancia por hash (estable) para variar íconos
+    // Stable hash alternation to vary the icons
     const s = String(authorName || "");
     let hash = 0;
     for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
@@ -181,12 +320,12 @@ setNote("");    } catch (err) {
   }
 
   function buildReviewCard({ author, text, avatarUrl, hotelName }) {
-    const safeAuthor = escapeHtml(author || "Usuario");
+    const safeAuthor = escapeHtml(author || "User");
     const safeText = escapeHtml(text || "");
     const safeHotel = escapeHtml(hotelName || "Hotel");
 
     const avatar = avatarUrl || pickFallbackAvatar(author);
-    // Mantengo exactamente tu estructura/clases para no tocar CSS
+    // Same structure/classes to avoid touching the CSS
     return `
       <div class="review-card">
         <img class="review-avatar" src="${avatar}" alt="User" loading="lazy" />
@@ -204,14 +343,14 @@ setNote("");    } catch (err) {
     if (!group || !clone) return;
 
     if (!reviewCardsHtml || !reviewCardsHtml.length) {
-      group.innerHTML = `<div class="text-muted small p-3">No hay reseñas disponibles por ahora.</div>`;
+      group.innerHTML = `<div class="text-muted small p-3">No reviews available right now.</div>`;
       clone.innerHTML = "";
       return;
     }
 
     const html = reviewCardsHtml.join("");
     group.innerHTML = html;
-    clone.innerHTML = html; // loop perfecto
+    clone.innerHTML = html; // perfect loop
   }
 
   async function loadAndRenderReviewsFromFeatured(apiKey, opts = {}) {
@@ -225,21 +364,21 @@ setNote("");    } catch (err) {
       document.getElementById("reviewsTrack") &&
       document.getElementById("reviewsNote");
 
-    if (!hasDOM) return;
+    if (!hasDOM) return { ok: false, count: 0 };
 
-setReviewsNote("");
+    setReviewsNote("");
     try {
       await window.loadGoogleMapsOnce({ apiKey, libraries: "places" });
 
-      // Asegura que Featured ya tenga data
+      // Make sure Featured already has data
       if (!lastFeaturedPlaces || lastFeaturedPlaces.length === 0) {
-        // Si alguien llamó esto antes que init(), intentamos cargar destacados rápido
+        // If called before init(), try loading featured quickly
         await init();
       }
 
       const baseHotels = (lastFeaturedPlaces || []).slice(0, Math.max(1, maxHotels));
 
-      // Pedimos Place Details para reviews
+      // Ask Place Details for reviews
       const detailsList = await Promise.allSettled(
         baseHotels
           .filter(p => !!p.place_id)
@@ -256,7 +395,7 @@ setReviewsNote("");
           // rev: author_name, profile_photo_url, text, time, rating, etc.
          allReviews.push({
   hotelName,
-  author: rev.author_name || "Usuario",
+  author: rev.author_name || "User",
   avatarUrl: rev.profile_photo_url || "",
   text: rev.text || "",
   time: Number(rev.time || 0),
@@ -265,20 +404,20 @@ setReviewsNote("");
         }
       }
 
-      // Ordena por más reciente (si time existe)
+      // Sort by most recent (when time exists)
       allReviews.sort((a, b) => (b.time || 0) - (a.time || 0));
 
-      // Filtra vacías y recorta
-     const MIN_LEN = 60;     // “mediana” mínimo (ajusta)
-const MAX_LEN = 220;    // “mediana” máximo (ajusta)
-const MIN_RATING = 4;   // solo positivas (4-5). Si quieres “puras 5”, pon 5.
+      // Drop empty ones and trim
+     const MIN_LEN = 60;     // minimum “medium” length (tune it)
+const MAX_LEN = 220;    // maximum “medium” length (tune it)
+const MIN_RATING = 4;   // positive only (4-5). Use 5 for “only 5 stars”.
 
 const picked = allReviews
   .filter(x => {
     const t = (x.text || "").trim();
     const lenOk = t.length >= MIN_LEN && t.length <= MAX_LEN;
 
-    // rating puede venir undefined si algo raro, lo descartamos
+    // rating can be undefined in odd cases, drop it
     const r = Number(x.rating ?? 0);
     const ratingOk = r >= MIN_RATING;
 
@@ -288,34 +427,38 @@ const picked = allReviews
 
       if (!picked.length) {
         renderReviews([]);
-        setReviewsNote("No se encontraron reseñas públicas para los destacados.");
-        return;
+        setReviewsNote("No public reviews found for the featured hotels.");
+        return { ok: false, count: 0 };
       }
 
       const cards = picked.map(buildReviewCard);
       renderReviews(cards);
-setReviewsNote("");    } catch (err) {
+      setReviewsNote("");
+
+      return { ok: true, count: cards.length };
+    } catch (err) {
       console.error("[Reviews] error:", err);
       renderReviews([]);
-      setReviewsNote("No se pudieron cargar reseñas (Place Details). Revisa consola/API Key.");
+      setReviewsNote("Could not load reviews (Place Details). Check console/API key.");
+      return { ok: false, count: 0 };
     }
   }
 
   return {
     async loadAndRender(apiKey) {
-      // Reusa tu loader existente
+      // Reuse the existing loader
       await window.loadGoogleMapsOnce({ apiKey, libraries: "places" });
-      await init();
+      return await init();
     },
 
-    // ✅ NUEVO: para que app.js pueda reusar destacados
+    // NEW: lets app.js reuse the featured list
     getFeaturedPlaces() {
       return (lastFeaturedPlaces || []).slice();
     },
 
-    // ✅ NUEVO: carga y renderiza reviews reales a partir de los destacados
+    // NEW: loads and renders real reviews from the featured hotels
     async loadAndRenderReviewsFromFeatured(apiKey, opts = {}) {
-      await loadAndRenderReviewsFromFeatured(apiKey, opts);
+      return await loadAndRenderReviewsFromFeatured(apiKey, opts);
     }
   };
 })();

@@ -1,9 +1,14 @@
 // ================= FILTROS CLIENT-SIDE =================
-// Filtros compartidos entre la vista Hoteles y Favoritos.
-// Operan sobre resultados de la Places API (nearbySearch / getDetails).
+// Filters shared by the Hoteles and Favoritos views.
+// They run over Places API results (nearbySearch / getDetails).
 
+// Accent-insensitive: "jardin" must match "Jardin"
 export function normalize(s) {
-  return String(s || "").toLowerCase().trim();
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
 }
 
 export function matchPriceRange(place, priceRange) {
@@ -16,36 +21,38 @@ export function matchPriceRange(place, priceRange) {
   return true;
 }
 
+// Tijuana zones with their colonias. It used to be a loose substring
+// match and "playas" let Playas de Rosarito through, another city.
+const ZONAS = {
+  "zona rio": ["zona urbana rio", "zona rio", "rio tijuana", "paseo de los heroes",
+               "agua caliente", "hipodromo", "aviacion"],
+  centro: ["zona centro", "revolucion", "primera 1era", "col. centro"],
+  otay: ["otay"],
+  playas: ["playas de tijuana", "playas tijuana"],
+};
+
+// Neighboring cities that fall inside the radius
+const CIUDADES_FUERA = ["rosarito", "ensenada", "tecate", "mexicali"];
+
 export function matchZone(place, zone) {
   if (!zone || zone === "all") return true;
+
   const v = normalize(place.vicinity || place.formatted_address || "");
   const z = normalize(zone);
 
-  if (z.includes("zona río") || z.includes("zona rio")) {
-    return (
-      v.includes("zona rio") ||
-      v.includes("zona río") ||
-      v.includes("rio tijuana") ||
-      v.includes("paseo de los héroes") ||
-      v.includes("agua caliente")
-    );
-  }
-  if (z.includes("centro")) {
-    return (
-      v.includes("zona centro") ||
-      v.includes("centro") ||
-      v.includes("revolución") ||
-      v.includes("av. revolucion") ||
-      v.includes("revolucion")
-    );
-  }
-  if (z.includes("otay")) return v.includes("otay");
-  if (z.includes("playas")) return v.includes("playas");
-  return v.includes(z);
+  // NOTE: some Rosarito addresses carry "tijuana" in the highway name,
+  // so we must exclude rather than require.
+  if (CIUDADES_FUERA.some((c) => v.includes(c))) return false;
+
+  const claves = ZONAS[z] || Object.entries(ZONAS).find(([k]) => z.includes(k))?.[1];
+
+  if (!claves) return v.includes(z);
+
+  return claves.some((clave) => v.includes(clave));
 }
 
 // ----------------------------------------
-// Lee los valores actuales de la barra de filtros
+// Read the current values from the filter bar
 // ----------------------------------------
 export function readFiltersFromUI() {
   return {
@@ -57,14 +64,15 @@ export function readFiltersFromUI() {
 }
 
 // ----------------------------------------
-// Aplica los filtros de la UI a una lista de Places
+// Apply the UI filters to a list of Places
 // ----------------------------------------
-export function filterPlaces(places) {
+// skipQuery: if the list came from Places, Google already applied the term
+export function filterPlaces(places, options = {}) {
   const { q, rating, price, zone } = readFiltersFromUI();
 
   let list = [...places];
 
-  if (q) {
+  if (q && !options.skipQuery) {
     list = list.filter((p) => {
       const name = normalize(p.name);
       const addr = normalize(p.vicinity || p.formatted_address);

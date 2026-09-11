@@ -1,5 +1,5 @@
 # Import classes 
-from .SQLServerConnection import SQLServerConnection
+from .OracleConnection import OracleConnection
 import json
 import bcrypt
 from .User import User
@@ -88,10 +88,10 @@ class Location:
     # constructor calls self._load_by_id)
     def _load_by_id(self, id):
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 #cursor
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, name, description, address, lat, lng, userId, status FROM Locations WHERE id = ?", id)
+                cursor.execute("SELECT id, name, description, address, lat, lng, userId, status FROM Locations WHERE id = :1", [id])
                 row = cursor.fetchone()
                 if row:
                     self._id, self._name, self._description, self._address, self._lat, self._lng, self._userId, self._status = row
@@ -110,7 +110,7 @@ class Location:
             "lat": self._lat,
             "lng": self._lng,
             "userId": self._userId,
-            "status": self._status
+            "status": bool(self._status)
         })
     
     # Get all locations
@@ -120,7 +120,7 @@ class Location:
         locations = []
         try:
             # Connection
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 # Query
                 cursor.execute("SELECT id, name, description, address, lat, lng, userId, status FROM Locations")
@@ -142,13 +142,13 @@ class Location:
     @staticmethod
     def get_by_user_id(user_id):
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT id, name, description, address, lat, lng, userId, status
                     FROM Locations
-                    WHERE userId = ?
-                """, user_id)
+                    WHERE userId = :1
+                """, [user_id])
 
                 rows = cursor.fetchall()
 
@@ -174,12 +174,12 @@ class Location:
     # Add location
     def add(self):
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO Locations
                     (name, description, address, lat, lng, userId, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (:1, :2, :3, :4, :5, :6, :7)
                 """, (
                     self._name,
                     self._description,
@@ -187,7 +187,7 @@ class Location:
                     self._lat,
                     self._lng,
                     self._userId,
-                    self._status
+                    int(bool(self._status))
                 ))
                 conn.commit()
         except Exception as ex:

@@ -1,5 +1,5 @@
 #import classes
-from .SQLServerConnection import SQLServerConnection
+from .OracleConnection import OracleConnection
 import json
 import bcrypt
 
@@ -91,11 +91,11 @@ class User:
     # Load user by ID
     def _load_by_id(self, user_id):
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT id, name, lastname, dateOfBirth, username, password, phone, status FROM Users WHERE id = ?",
-                    user_id
+                    "SELECT id, name, lastname, dateOfBirth, username, password, phone, status FROM Users WHERE id = :1",
+                    [user_id]
                 )
                 row = cursor.fetchone()
                 if row:
@@ -111,10 +111,12 @@ class User:
             'id': self._id,
             'name': self._name,
             'lastname': self._lastname,
-            'dateOfBirth': str(self._dateOfBirth),
+            'dateOfBirth': self._dateOfBirth.strftime("%Y-%m-%d")
+                           if hasattr(self._dateOfBirth, "strftime")
+                           else str(self._dateOfBirth),
             'username': self._username,
             'phone': self._phone,
-            'status': self._status
+            'status': bool(self._status)
         })
 
     # Get all users
@@ -122,7 +124,7 @@ class User:
     def get_all():
         list = []
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT id, name, lastname, dateOfBirth, username, password, phone, status FROM Users"
@@ -143,14 +145,17 @@ class User:
     # ADD
     def add(self):
         try:
-            with SQLServerConnection.get_connection() as conn:
+            with OracleConnection.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    """INSERT INTO Users 
+                    """INSERT INTO Users
                     (name, lastname, dateOfBirth, username, password, phone, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    self._name, self._lastname, self._dateOfBirth,
-                    self._username, self._password, self._phone, self._status
+                    VALUES (:1, :2, TO_DATE(:3, 'YYYY-MM-DD'), :4, :5, :6, :7)""",
+                    [
+                        self._name, self._lastname, str(self._dateOfBirth),
+                        self._username, self._password, self._phone,
+                        int(bool(self._status)),
+                    ]
                 )
                 conn.commit()
         except Exception as e:
@@ -159,11 +164,11 @@ class User:
     # Login by username
     @staticmethod
     def get_by_username(username):
-        with SQLServerConnection.get_connection() as conn:
+        with OracleConnection.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, name, lastname, dateOfBirth, username, password, phone, status FROM Users WHERE username = ?",
-                username
+                "SELECT id, name, lastname, dateOfBirth, username, password, phone, status FROM Users WHERE username = :1",
+                [username]
             )
             row = cursor.fetchone()
             if row:

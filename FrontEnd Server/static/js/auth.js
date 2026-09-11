@@ -1,3 +1,9 @@
+// Misma fuente que modules/config.js: el <meta name="api-base"> que
+// inyecta el servidor. Es script clasico, por eso no puede importarlo.
+const API_BASE = (
+  document.querySelector('meta[name="api-base"]')?.content || ""
+).trim() || "http://127.0.0.1:5010";
+
 function setSession(user){
   sessionStorage.setItem("tj_user", JSON.stringify(user));
 }
@@ -15,7 +21,7 @@ document.addEventListener("click", (e) => {
       return;
     }
 
-    fetch("http://127.0.0.1:5010/login", {
+    fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -37,7 +43,7 @@ document.addEventListener("click", (e) => {
         return;
       }
 
-      // ✅ AQUÍ: Guardar sesión del usuario
+      // Store the user session here
       sessionStorage.setItem("tj_user", JSON.stringify(result.data.user));
 
       Swal.fire({
@@ -83,7 +89,7 @@ document.addEventListener("click", (e) => {
     }
 
     // FETCH (NO ASYNC)
-    fetch("http://127.0.0.1:5010/users", {
+    fetch(`${API_BASE}/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

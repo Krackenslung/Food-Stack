@@ -5,6 +5,8 @@ from flask import jsonify
 
 from models.User import RecordNotFoundError
 from models.Location import RecordNotFoundException
+from models.Favorite import RecordNotFoundException as FavoriteNotFoundException
+from models.SupportTicket import RecordNotFoundException as TicketNotFoundException
 
 
 # Success envelope
@@ -33,7 +35,8 @@ def handle_errors(f):
     def wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except (RecordNotFoundError, RecordNotFoundException) as e:
+        except (RecordNotFoundError, RecordNotFoundException,
+                FavoriteNotFoundException, TicketNotFoundException) as e:
             return fail(str(e), 404)
         except Exception as e:
             return fail(str(e), 500)

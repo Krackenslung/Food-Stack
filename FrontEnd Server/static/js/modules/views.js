@@ -1,5 +1,5 @@
 // ================= Views =================
-// Cambio de vistas del SPA (/app) + carga perezosa de cada vista.
+// SPA view switching (/app) + lazy loading per view.
 
 import { $ } from "./dom.js";
 import { API_KEY } from "./config.js";
@@ -19,7 +19,7 @@ export function getCurrentView() {
 // ================= Featured (Inicio) =================
 
 // ========================================
-// Inicializa los hoteles destacados si el DOM está listo
+// Init the featured hotels if the DOM is ready
 // ========================================
 async function initFeaturedIfPossible() {
   if (featuredLoaded) return;
@@ -29,23 +29,31 @@ async function initFeaturedIfPossible() {
   if (!hasDOM) return;
 
   if (!window.FeaturedPlaces?.loadAndRender) {
-    console.warn("FeaturedPlaces no disponible");
+    console.warn("FeaturedPlaces unavailable");
     return;
   }
 
   featuredLoaded = true;
   try {
-    await window.FeaturedPlaces.loadAndRender(API_KEY);
-    console.log("FeaturedPlaces cargó ✅");
+    const result = await window.FeaturedPlaces.loadAndRender(API_KEY);
+
+    if (result?.ok) {
+      console.log(`FeaturedPlaces loaded (${result.count})`);
+    } else {
+      // Places failed inside the module: release the flag to retry
+      console.warn("FeaturedPlaces returned no featured hotels");
+      featuredLoaded = false;
+    }
+
     await initReviewsIfPossible();
   } catch (err) {
-    console.error("FeaturedPlaces falló:", err);
+    console.error("FeaturedPlaces failed:", err);
     featuredLoaded = false;
   }
 }
 
 // ========================================
-// Inicializa las reseñas si el DOM está listo
+// Init the reviews if the DOM is ready
 // ========================================
 async function initReviewsIfPossible() {
   if (reviewsLoaded) return;
@@ -58,25 +66,35 @@ async function initReviewsIfPossible() {
   if (!hasDOM) return;
 
   if (!window.FeaturedPlaces?.loadAndRenderReviewsFromFeatured) {
-    console.warn("Reviews no disponibles");
+    console.warn("Reviews unavailable");
     return;
   }
 
   reviewsLoaded = true;
   try {
-    await window.FeaturedPlaces.loadAndRenderReviewsFromFeatured(API_KEY, {
-      maxHotels: 6,
-      maxCards: 10,
-    });
-    console.log("Reviews reales cargadas ✅");
+    const result = await window.FeaturedPlaces.loadAndRenderReviewsFromFeatured(
+      API_KEY,
+      {
+        maxHotels: 6,
+        maxCards: 10,
+      }
+    );
+
+    if (result?.ok) {
+      console.log(`Real reviews loaded (${result.count})`);
+    } else {
+      // No reviews (or Place Details failed): allow a retry
+      console.warn("No reviews loaded");
+      reviewsLoaded = false;
+    }
   } catch (err) {
-    console.error("Reviews fallaron:", err);
+    console.error("Reviews failed:", err);
     reviewsLoaded = false;
   }
 }
 
 // ========================================
-// Oculta todas las vistas de la aplicación
+// Hide every app view
 // ========================================
 function hideAllViews() {
   ["view-inicio", "view-grid", "view-soporte"].forEach((id) => {
@@ -86,20 +104,29 @@ function hideAllViews() {
 }
 
 // ========================================
-// Aplica filtros de la UI a la vista activa (Places API)
+// Apply UI filters to the active view (Places API)
 // ========================================
 export function applyFilters() {
+  // The search bar is global, but results only live in the list views.
+  // Typing from Inicio or Soporte sends you to Hoteles: setActiveView
+  // triggers the load and that load already applies the current filters.
+  if (currentView !== "hoteles" && currentView !== "favoritos") {
+    setActiveView("hoteles");
+    return;
+  }
+
   if (currentView === "hoteles") {
     HotelsMap.applyClientFilters?.();
     return;
   }
+
   if (currentView === "favoritos") {
     FavoritesMap.applyClientFilters?.();
   }
 }
 
 // ========================================
-// Establece y muestra la vista activa
+// Set and show the active view
 // ========================================
 export function setActiveView(view) {
   currentView = view;
@@ -126,7 +153,7 @@ export function setActiveView(view) {
     $("view-grid")?.classList.add("active");
 
     const listTitle = $("listTitle");
-    if (listTitle) listTitle.textContent = view === "favoritos" ? "Favoritos" : "Hoteles";
+    if (listTitle) listTitle.textContent = view === "favoritos" ? "Favorites" : "Hotels";
 
     if (view === "hoteles") {
       if (!hotelsMapLoaded) {
@@ -144,7 +171,7 @@ export function setActiveView(view) {
 
     if (view === "favoritos") {
       FavoritesMap.loadFavorites(API_KEY).catch((err) => {
-        console.error("Error cargando favoritos:", err);
+        console.error("Error loading favorites:", err);
       });
       return;
     }

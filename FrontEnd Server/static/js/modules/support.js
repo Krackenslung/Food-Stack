@@ -1,6 +1,8 @@
-// ================= Soporte (Frontend only) =================
+// ================= Support =================
+// Tickets go to the backend (SupportTickets table), not localStorage.
 
 import { $ } from "./dom.js";
+import { API_BASE } from "./config.js";
 
 let supportBound = false;
 
@@ -59,7 +61,7 @@ export function bindSupportEventsIfPossible() {
     setHint("");
   });
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const name = ($name?.value || "").trim();
@@ -68,37 +70,48 @@ export function bindSupportEventsIfPossible() {
     const msg = ($msg?.value || "").trim();
 
     if (name.length < 2) {
-      setHint("Escribe tu nombre (mínimo 2 caracteres).");
+      setHint("Enter your name (at least 2 characters).");
       return;
     }
     if (!isValidEmail(email)) {
-      setHint("Escribe un email válido.");
+      setHint("Enter a valid email.");
       return;
     }
     if (msg.length < 10) {
-      setHint("Describe tu mensaje (mínimo 10 caracteres).");
+      setHint("Describe your message (at least 10 characters).");
       return;
     }
 
     setHint("");
 
-    const item = {
-      id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      createdAt: new Date().toISOString(),
-      name,
-      email,
-      topic,
-      msg,
-      view: "soporte",
-    };
+    // Disable the button so a slow network does not file the ticket twice
+    const btnSubmit = form.querySelector('[type="submit"]');
+    if (btnSubmit) btnSubmit.disabled = true;
+    setHint("Sending...");
 
-    const key = "tj_support_tickets";
-    const prev = JSON.parse(localStorage.getItem(key) || "[]");
-    prev.unshift(item);
-    localStorage.setItem(key, JSON.stringify(prev));
+    try {
+      const res = await fetch(`${API_BASE}/support`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, topic, message: msg }),
+      });
 
-    showSupportToast("✅ Mensaje enviado. Gracias, te contactaremos pronto.");
+      const data = await res.json().catch(() => ({}));
 
-    if ($msg) $msg.value = "";
+      if (!res.ok || data.status !== 0) {
+        setHint(data.errorMessage || "Could not send your message. Try again.");
+        return;
+      }
+
+      setHint("");
+      showSupportToast("Message sent. Thanks, we will contact you soon.");
+      if ($msg) $msg.value = "";
+    } catch (err) {
+      console.error("Support:", err);
+      setHint("Could not reach the server. Check your connection.");
+    } finally {
+      if (btnSubmit) btnSubmit.disabled = false;
+    }
   });
 }

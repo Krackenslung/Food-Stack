@@ -1,0 +1,43 @@
+# Caddy block for TJ-Hotels.
+#
+# APPEND this to the end of /etc/caddy/Caddyfile without touching the
+# existing AulaSense block. Caddy serves several sites on the same :443
+# by hostname, so the two coexist.
+#
+# nip.io resolves any <anything>.<ip>.nip.io subdomain to that IP, so
+# tjhotels.64.181.232.104.nip.io points here with nothing to register.
+# Caddy issues its Let's Encrypt certificate automatically.
+
+tjhotels.64.181.232.104.nip.io {
+    encode gzip
+
+    # Static files served straight by Caddy, never through Flask. On a
+    # 1 GB VM shared with AulaSense that matters.
+    handle_path /static/* {
+        root * /opt/tjhotels/frontend/static
+        file_server
+
+        # Images rarely change: cache them hard.
+        @media path *.png *.jpg *.jpeg *.webp *.svg *.ico
+        header @media Cache-Control "public, max-age=604800"
+
+        # Code does change. A long max-age here means a deploy takes a
+        # week to reach anyone who already visited. "no-cache" still uses
+        # the cache, but revalidates with the ETag first (cheap 304s).
+        @code path *.js *.css
+        header @code Cache-Control "no-cache"
+    }
+
+    # Backend API. handle_path strips the /api prefix, so the backend
+    # receives /login, /me, /favorites... exactly as it defines them.
+    # Needed because both apps expose /login and /logout and they would
+    # collide on a single domain.
+    handle_path /api/* {
+        reverse_proxy localhost:5010
+    }
+
+    # Everything else: the frontend pages
+    handle {
+        reverse_proxy localhost:5020
+    }
+}

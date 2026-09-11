@@ -1,0 +1,29 @@
+[Unit]
+Description=TJ Hotels - API (Flask + gunicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=tjhotels
+Group=tjhotels
+WorkingDirectory=/opt/tjhotels/backend
+
+# 1 worker and 4 threads on purpose: the VM has 1 GB and shares memory
+# with AulaSense (caddy + 3 containers). Threads are enough because the
+# work is waiting on the database, not CPU.
+ExecStart=/opt/tjhotels/venv/bin/gunicorn     --workers 1     --threads 4     --bind 127.0.0.1:5010     --timeout 60     --access-logfile -     --error-logfile -     "server:create_app()"
+
+Restart=on-failure
+RestartSec=5
+
+# If something runs away, do not let it take AulaSense down
+MemoryMax=250M
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

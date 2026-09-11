@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TJ Hotels | App</title>
 
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" rel="stylesheet">
+  <!-- Maps JS API key injected by the server (FrontEnd Server/.env) -->
+  <meta name="google-maps-api-key" content="{{ maps_api_key }}"/>
+  <!-- Backend URL injected by the server (FrontEnd Server/.env) -->
+  <meta name="api-base" content="{{ api_base }}"/>
+
+  <!-- Favicon: SVG for modern browsers, PNG fallback -->
+  <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
+  <link rel="icon" type="image/png" href="/static/images/logo.png"/>
+  <link rel="apple-touch-icon" href="/static/images/logo.png"/>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="static/styles/ui.css">
@@ -25,21 +34,21 @@
 
     <nav class="side-nav">
       <button class="nav-item active" data-view="inicio">
-        <i class="bi bi-house-door-fill"></i> Inicio
+        <i class="bi bi-house-door-fill"></i> Home
       </button>
 
       <button class="nav-item" data-view="hoteles">
-        <i class="bi bi-building"></i> Hoteles
+        <i class="bi bi-building"></i> Hotels
       </button>
 
       <button class="nav-item" data-view="favoritos">
-        <i class="bi bi-heart"></i> Favoritos
+        <i class="bi bi-heart"></i> Favorites
       </button>
 
       <div class="nav-sep"></div>
 
       <button class="nav-item" data-view="soporte">
-        <i class="bi bi-gear"></i> Soporte
+        <i class="bi bi-gear"></i> Support
       </button>
     </nav>
   </aside>
@@ -50,22 +59,22 @@
     <!-- Topbar -->
     <header class="topbar glass-card">
       <div class="search">
-        <span class="icon">🔎</span>
-        <input id="q" placeholder="Buscar hoteles..." />
+        <span class="icon"><i class="bi bi-search"></i></span>
+        <input id="q" placeholder="Search hotels..." />
       </div>
 
       <div class="userbox">
         <button id="btnRegister" class="btn btn-light btn-sm">Register</button>
-        <button id="btnLogin" class="btn btn-light btn-sm">Iniciar sesión</button>
+        <button id="btnLogin" class="btn btn-light btn-sm">Sign in</button>
       </div>
     </header>
 
     <!-- Filters -->
     <section class="filters glass-card" id="filtersBar">
       <div class="chip">
-        <span>💲</span>
+        <span><i class="bi bi-currency-dollar"></i></span>
         <select id="price">
-          <option value="all">Precios</option>
+          <option value="all">Price</option>
           <option value="0-100">$</option>
           <option value="100-200">$$</option>
           <option value="200-999">$$$</option>
@@ -73,7 +82,7 @@
       </div>
 
       <div class="chip">
-        <span>⭐</span>
+        <span><i class="bi bi-star-fill text-warning"></i></span>
         <select id="rating">
           <option value="all">Rating</option>
           <option value="4.5">4.5+</option>
@@ -83,10 +92,10 @@
       </div>
 
       <div class="chip">
-        <span>📍</span>
+        <span><i class="bi bi-geo-alt-fill text-danger"></i></span>
         <select id="zone">
           <option value="all">Tijuana Zone</option>
-          <option value="Zona Río">Zona Río</option>
+          <option value="Zona Río">Zona Rio</option>
           <option value="Centro">Centro</option>
           <option value="Otay">Otay</option>
           <option value="Playas">Playas</option>
@@ -107,15 +116,15 @@
                  alt="TJ Hotels banner" />
 
             <div class="hero-overlay">
-              <div class="hero-title">Tu siguiente stay en Tijuana</div>
+              <div class="hero-title">Your next stay in Tijuana</div>
               <div class="hero-sub">
-                Explora hoteles por zona, rating y servicios.
-                Cuando elijas uno, te mandamos al sitio oficial para reservar.
+                Browse hotels by zone, rating and amenities.
+                Pick one and we send you to the official site to book.
               </div>
 
               <div class="hero-ctas">
                 <button class="btn btn-primary btn-sm" id="btnGoHotels">
-                  Explorar hoteles
+                  Explore hotels
                 </button>
               </div>
             </div>
@@ -124,7 +133,7 @@
 
         <!-- DESTACADOS -->
         <div class="glass-card p-3 mt-3">
-          <div class="featured-title mb-3">Hoteles Destacados</div>
+          <div class="featured-title mb-3">Featured Hotels</div>
           <div class="text-muted small" id="featuredNote"></div>
           <div class="featured-carousel">
             <div class="carousel-track" id="featuredTrack">
@@ -136,7 +145,7 @@
 
         <!-- REVIEWS -->
         <div class="glass-card p-3 mt-3">
-          <div class="reviews-title mb-3">Opiniones recientes</div>
+          <div class="reviews-title mb-3">Recent Reviews</div>
           <div class="text-muted small" id="reviewsNote"></div>
           <div class="reviews-carousel">
             <div class="reviews-track" id="reviewsTrack">
@@ -148,13 +157,13 @@
 
       </section>
 
-      <!-- GRID (Hoteles / Favoritos) -->
+      <!-- GRID (Hotels / Favorites) -->
       <section class="view" id="view-grid">
         <section class="grid">
           <div class="list glass-card">
             <div class="list-head">
               <div>
-                <div class="fw-semibold" id="listTitle">Hoteles</div>
+                <div class="fw-semibold" id="listTitle">Hotels</div>
                 <div class="text-muted small" id="count"></div>
               </div>
 
@@ -168,11 +177,11 @@
                 </select>
 
                 <button class="btn btn-outline-primary btn-sm" id="btnGoFavs">
-                  ★ Favoritos
+                  <i class="bi bi-star-fill"></i> Favorites
                 </button>
 
                 <button id="btnRefreshHotels" class="btn btn-outline-primary btn-sm">
-                  ⟳ Recargar
+                  <i class="bi bi-arrow-clockwise"></i> Reload
                 </button>
               </div>
             </div>
@@ -182,12 +191,17 @@
 
           <div class="map glass-card">
             <div class="map-head">
-              <div class="fw-semibold">Mapa</div>
+              <div class="fw-semibold">Map</div>
             </div>
 
-            <div id="map" class="map-canvas">
-              <button id="btnRecenter" class="map-fab">⌖</button>
-            </div>
+            <!-- El boton va FUERA de #map: Google Maps reemplaza el
+                 contenido del contenedor al inicializarse y se lo llevaba
+                 por delante, dejandolo sin listener. -->
+            <div id="map" class="map-canvas"></div>
+
+            <button id="btnRecenter" class="map-fab" aria-label="Recenter map">
+              <i class="bi bi-crosshair"></i>
+            </button>
           </div>
         </section>
       </section>
@@ -195,9 +209,9 @@
       <!-- SOPORTE -->
       <section class="view" id="view-soporte">
         <div class="glass-card p-3 support-wrap">
-          <h5>Soporte</h5>
+          <h5>Support</h5>
           <div class="text-muted small mb-3">
-            Preguntas frecuentes y contacto rápido.
+            FAQ and quick contact.
           </div>
 
           <div class="accordion accordion-flush mb-4" id="supportFaq">
@@ -206,7 +220,7 @@
                 <button class="accordion-button collapsed"
                         data-bs-toggle="collapse"
                         data-bs-target="#faq1">
-                  ¿Cómo funcionan las reservas?
+                  How do bookings work?
                 </button>
               </h2>
               <div id="faq1" class="accordion-collapse collapse"
@@ -220,7 +234,7 @@
 
           <form id="supportForm">
             <div class="mb-2">
-              <input id="supportName" class="form-control" placeholder="Nombre">
+              <input id="supportName" class="form-control" placeholder="Name">
             </div>
             <div class="mb-2">
               <input id="supportEmail" class="form-control" placeholder="Email">
@@ -228,20 +242,20 @@
             <div class="mb-2">
               <select id="supportTopic" class="form-select">
                 <option selected>General</option>
-                <option>Reservas</option>
-                <option>Cuenta</option>
-                <option>Otro</option>
+                <option>Bookings</option>
+                <option>Account</option>
+                <option>Other</option>
               </select>
             </div>
             <div class="mb-2">
               <textarea id="supportMsg" class="form-control" rows="3"
-                        placeholder="Mensaje"></textarea>
+                        placeholder="Message"></textarea>
             </div>
             <div class="text-danger small mb-2" id="supportHint"></div>
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSupportClear">Limpiar</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSupportEmail">Enviar por email</button>
+              <button type="submit" class="btn btn-primary btn-sm">Send</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSupportClear">Clear</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSupportEmail">Send by email</button>
             </div>
           </form>
         </div>
@@ -262,11 +276,11 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Scripts globales (no-módulo: exponen window.loadGoogleMapsOnce / window.FeaturedPlaces) -->
+<!-- Global scripts (non-module: expose window.loadGoogleMapsOnce / window.FeaturedPlaces) -->
 <script src="/static/js/maps-loader.js"></script>
 <script src="/static/js/featured-places.js"></script>
 
-<!-- Entry point (ES modules en /static/js/modules/) -->
+<!-- Entry point (ES modules in /static/js/modules/) -->
 <script type="module" src="/static/js/app.js"></script>
 
 </body>
