@@ -24,6 +24,7 @@ def get_ingredients():
 
 # GET BY ID
 # -------------------------
+@ingredient_bp.route('/ingredients/<int:ingredient_id>', methods=['GET'])
 @ingredient_bp.route('/ingredient/<int:ingredient_id>', methods=['GET'])
 #@require_auth
 def get_ingredient_by_id(ingredient_id):
@@ -41,6 +42,7 @@ def get_ingredient_by_id(ingredient_id):
 
 # POST
 # -------------------------
+@ingredient_bp.route('/ingredients', methods=['POST'])
 @ingredient_bp.route('/ingredient', methods=['POST'])
 #@require_auth
 def create_ingredient():
@@ -69,6 +71,7 @@ def create_ingredient():
 
 # PUT
 # -------------------------
+@ingredient_bp.route('/ingredients/<int:ingredient_id>', methods=['PUT'])
 @ingredient_bp.route('/ingredient/<int:ingredient_id>', methods=['PUT'])
 #@require_auth
 def update_ingredient(ingredient_id):

@@ -26,6 +26,7 @@ def get_order_products():
 
 # GET BY ID
 # --------------------------
+@order_product_bp.route('/order-products/<int:id>', methods=['GET'])
 @order_product_bp.route('/order-product/<int:id>', methods=['GET'])
 #@require_auth
 def get_order_product_by_id(id):
@@ -61,6 +62,7 @@ def get_order_products_by_order_id(order_id):
 
 # POST
 # --------------------------
+@order_product_bp.route('/order-products', methods=['POST'])
 @order_product_bp.route('/order-product', methods=['POST'])
 @order_product_bp.route('/order-products', methods=['POST'])
 #@require_auth
@@ -93,6 +95,7 @@ def create_order_product():
 
 # PUT
 # --------------------------
+@order_product_bp.route('/order-products/<int:id>', methods=['PUT'])
 @order_product_bp.route('/order-product/<int:id>', methods=['PUT'])
 @order_product_bp.route('/order-products/<int:id>', methods=['PUT'])
 #@require_auth

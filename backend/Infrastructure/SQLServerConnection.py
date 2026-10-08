@@ -12,6 +12,8 @@ class SQLServerConnection:
         database = os.getenv("DATABASE")
         username = os.getenv("SQL_USER")
         password = os.getenv("SQL_PASSWORD")
+        # Set SQL_TRUST_SERVER_CERT=yes for a local SQL Server (self-signed cert).
+        trust_cert = "yes" if os.getenv("SQL_TRUST_SERVER_CERT", "").lower() in ("1", "true", "yes") else "no"
 
         missing = []
         if not server:
@@ -34,8 +36,8 @@ class SQLServerConnection:
             f"DATABASE={database};"
             f"UID={username};"
             f"PWD={password};"
+            f"TrustServerCertificate={trust_cert};"
             "Encrypt=yes;"
-            "TrustServerCertificate=yes;"
             "Timeout=30;"
         )
 

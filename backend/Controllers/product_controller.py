@@ -23,6 +23,7 @@ def get_all():
 
 # GET BY ID
 # -------------------------
+@product_bp.route('/products/<int:product_id>', methods=['GET'])
 @product_bp.route('/product/<int:product_id>', methods=['GET'])
 def get_product_by_id(product_id):
     try:
@@ -43,6 +44,7 @@ def get_product_by_id(product_id):
 
 # PUT
 # -------------------------
+@product_bp.route('/products', methods=['POST'])
 @product_bp.route('/product', methods=['POST'])
 #@require_auth
 def create_product():
@@ -75,6 +77,7 @@ def create_product():
  
 # PUT
 # -------------------------
+@product_bp.route('/products/<int:product_id>', methods=['PUT'])
 @product_bp.route('/product/<int:product_id>', methods=['PUT'])
 #@require_auth
 def update_product(product_id):

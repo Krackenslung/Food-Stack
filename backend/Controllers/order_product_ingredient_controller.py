@@ -24,6 +24,7 @@ def get_all():
 
 # GET BY ID
 # -------------------------
+@order_product_ingredient_bp.route('/order-product-ingredients/<int:id>', methods=['GET'])
 @order_product_ingredient_bp.route('/order-product-ingredient/<int:id>', methods=['GET'])
 #@require_auth
 def get_by_id(id):
@@ -57,6 +58,7 @@ def get_by_order_product_id(order_product_id):
 
 # POST
 # -------------------------
+@order_product_ingredient_bp.route('/order-product-ingredients', methods=['POST'])
 @order_product_ingredient_bp.route('/order-product-ingredient', methods=['POST'])
 #@require_auth
 def create():
@@ -87,6 +89,7 @@ def create():
  
 # PUT
 # -------------------------
+@order_product_ingredient_bp.route('/order-product-ingredients/<int:id>', methods=['PUT'])
 @order_product_ingredient_bp.route('/order-product-ingredient/<int:id>', methods=['PUT'])
 #@require_auth
 def update(id):

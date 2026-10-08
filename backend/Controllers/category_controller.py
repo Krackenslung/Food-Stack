@@ -23,6 +23,7 @@ def get_all():
 # -------------------------
 # GET BY ID
 # -------------------------
+@category_bp.route('/categories/<int:id>', methods=['GET'])
 @category_bp.route('/category/<int:id>', methods=['GET'])
 def get_by_id(id):
     try:
@@ -45,6 +46,7 @@ def get_by_id(id):
 # -------------------------
 # CREATE
 # -------------------------
+@category_bp.route('/categories', methods=['POST'])
 @category_bp.route('/category', methods=['POST'])
 def create():
     try:
@@ -72,6 +74,7 @@ def create():
 # -------------------------
 # UPDATE
 # -------------------------
+@category_bp.route('/categories/<int:id>', methods=['PUT'])
 @category_bp.route('/category/<int:id>', methods=['PUT'])
 def update(id):
     try:

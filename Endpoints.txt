@@ -1,4 +1,4 @@
-FoodStack API endpoint map (canonical routes)
+API endpoint map 
 
 Users
 - GET  /api/users                 (staff only)

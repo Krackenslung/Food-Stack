@@ -1,4 +1,7 @@
 from flask import jsonify, Blueprint, request
+import json
+from datetime import datetime
+
 from backend.Models.order import Order, RecordNotFoundException
 from ..Security.Auth import require_auth
 
@@ -23,6 +26,7 @@ def get_all():
 
 # GET BY ID
 # -------------------------
+@order_bp.route('/orders/<int:id>', methods=['GET'])
 @order_bp.route('/order/<int:id>', methods=['GET'])
 # @require_auth
 def get_by_id(id):
@@ -63,6 +67,7 @@ def get_by_user_id(user_id):
 # POST
 # Soporta /order y /orders para no romper frontend viejo o nuevo
 # -------------------------
+@order_bp.route('/orders', methods=['POST'])
 @order_bp.route('/order', methods=['POST'])
 @order_bp.route('/orders', methods=['POST'])
 # @require_auth
@@ -73,7 +78,7 @@ def create():
         o = Order()
         o.user_id = data.get("user_id")
         o.total = data.get("total", 0.0)
-        o.datetime = data.get("datetime")
+        o.datetime = data.get("datetime") or datetime.now()
         o.status = data.get("status", "pending")
 
         new_id = o.add()
@@ -94,6 +99,7 @@ def create():
 
 # PUT
 # -------------------------
+@order_bp.route('/orders/<int:id>', methods=['PUT'])
 @order_bp.route('/order/<int:id>', methods=['PUT'])
 # @require_auth
 def update(id):

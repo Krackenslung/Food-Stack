@@ -24,6 +24,7 @@ def get_user():
 
 # GET BY USER ID
 # -------------------------
+@user_bp.route('/users/<int:user_id>', methods=['GET'])
 @user_bp.route('/user/<int:user_id>', methods=['GET'])
 @user_bp.route('/users/<int:user_id>', methods=['GET'])
 #@require_auth
@@ -46,6 +47,7 @@ def get_user_with_orders(user_id):
     
 # POST
 # -------------------------
+@user_bp.route('/users', methods=['POST'])
 @user_bp.route('/user', methods=['POST'])
 @user_bp.route('/users', methods=['POST'])
 #@require_auth
@@ -165,6 +167,7 @@ def logout():
 
 # PUT
 # -------------------------
+@user_bp.route('/users/<int:user_id>', methods=['PUT'])
 @user_bp.route('/user/<int:user_id>', methods=['PUT'])
 @user_bp.route('/users/<int:user_id>', methods=['PUT'])
 #@require_auth
