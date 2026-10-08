@@ -1,0 +1,65 @@
+:root {
+  --bg: #f3f6ff;
+  --glass: rgba(255, 255, 255, 0.72);
+  --stroke: rgba(0, 0, 0, 0.06);
+  --shadow: 0 12px 40px rgba(16, 24, 40, 0.10);
+  --radius: 18px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("https://scontent-sjc6-1.xx.fbcdn.net/v/t39.30808-6/583903768_1282976457209609_8018502459700026694_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=2a1932&_nc_ohc=taGyPvzjwdwQ7kNvwEXuvgf&_nc_oc=AdnfSw_h_QkyiFWKsVeR0oHsjnqyp16YNCVhiKKbBVs0HBHH2jD0trPOg8HWe7NZsmE&_nc_zt=23&_nc_ht=scontent-sjc6-1.xx&_nc_gid=9rLlo-nNMOjYVVU7cj1h9g&oh=00_AfsKSgJZawW4xgLqvy88aiy6I0V3pxy-1vVEXoMbIerDgg&oe=699C6436") no-repeat center center;
+  background-size: cover;
+  z-index: -1;
+}
+
+.bg-grid {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(30, 58, 138, 0.10) 1px, transparent 0) 0 0 / 28px 28px,
+    linear-gradient(180deg, #f7f9ff, #eef3ff);
+}
+
+.glass-card {
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.brand-logo {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.brand-logo.small {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 28px;
+  color: #1e3a8a;
+}

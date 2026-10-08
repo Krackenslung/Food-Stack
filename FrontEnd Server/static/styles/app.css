@@ -1,0 +1,614 @@
+.app-body{
+  min-height:100vh;
+  background: linear-gradient(180deg, #f7f9ff, #eef3ff);
+}
+
+
+/* Layout */
+.app-shell{
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  padding: 18px;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar{
+  padding: 18px;
+  height: calc(100vh - 36px);
+  position: sticky;
+  top: 18px;
+  display:flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.side-brand{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  margin-bottom: 16px;
+}
+
+.brand-logo-img{
+  width: auto;
+  object-fit: contain;
+}
+
+.brand-logo-img.small{
+  height: 34px;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));
+}
+
+/* Nav */
+.side-nav{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.nav-sep{
+  height: 1px;
+  background: rgba(0,0,0,.06);
+  margin: 10px 0;
+}
+
+.nav-item{
+  text-align:left;
+  border: 1px solid rgba(0,0,0,.06);
+  background: rgba(255,255,255,.55);
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor:pointer;
+  transition: all .2s ease;
+}
+
+.nav-item:hover{
+  background: rgba(59,130,246,.08);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.08);
+}
+
+.nav-item.active{
+  background: rgba(59,130,246,.14);
+  border-color: rgba(59,130,246,.22);
+}
+
+.side-footer{ margin-top:auto; }
+
+/* Content */
+.content{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-width: 0;
+}
+
+.topbar{
+  padding: 12px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.search{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: rgba(255,255,255,.60);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  padding: 10px 12px;
+  max-width: 620px;
+}
+
+.search input{
+  border:none;
+  outline:none;
+  background: transparent;
+  width:100%;
+}
+
+.userbox{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* Filters */
+.filters{
+  padding: 10px 12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border: 1px solid rgba(0,0,0,.06);
+  background: rgba(255,255,255,.60);
+  border-radius: 14px;
+  padding: 8px 10px;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+
+.chip:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,.05);
+}
+
+.chip select{
+  border:none;
+  outline:none;
+  background: transparent;
+}
+
+/* Views */
+.views{ min-width:0; }
+.view{ display:none; }
+.view.active{ display:block; }
+
+.view-card{
+  animation: fadeUp .25s ease both;
+}
+
+@keyframes fadeUp{
+  from{ opacity:0; transform: translateY(6px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* Grid principal */
+.grid{
+  display:grid;
+  grid-template-columns: 420px 1fr;
+  gap: 14px;
+  height: calc(100vh - 170px);
+  min-height: 420px;
+}
+
+.list,
+.map{
+  min-height: 0;
+}
+
+.list{
+  padding: 12px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.list-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 6px 4px 10px;
+}
+
+.cards{
+  flex: 1;
+  min-height: 0;
+  overflow:auto;
+  padding-right: 6px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.card-hotel{
+  display:grid;
+  grid-template-columns: 86px 1fr auto;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.06);
+  background: rgba(255,255,255,.65);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card-hotel:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.10);
+}
+
+.thumb{
+  width:86px;
+  height:86px;
+  border-radius: 14px;
+  background: rgba(59,130,246,.10);
+  display:grid;
+  place-items:center;
+  font-size: 26px;
+}
+
+.meta .title{
+  font-weight:700;
+  margin-bottom: 2px;
+}
+
+.meta .sub{
+  font-size: 12px;
+  color: rgba(0,0,0,.55);
+}
+
+.meta .price{
+  font-weight:700;
+  margin-top: 6px;
+}
+
+/* Map */
+.map{
+  padding: 12px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.map-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 6px 4px 10px;
+}
+
+.map-canvas{
+  flex:1;
+  min-height: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.06);
+  overflow:hidden;
+  background: #e8efff;
+}
+
+/* Responsive */
+@media (max-width: 992px){
+  .app-shell{
+    grid-template-columns: 1fr;
+  }
+  .sidebar{
+    position: static;
+    height: auto;
+  }
+  .grid{
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+/* ================= HERO PREMIUM ================= */
+
+.hero{
+  position: relative;
+  height: 320px;     /* antes 240px */
+  overflow: hidden;
+}
+
+.hero-img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;  /* sube el encuadre (antes 35%) */
+  filter: brightness(.95);
+}
+
+.hero-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding: 22px 28px;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,.75),
+    rgba(0,0,0,.35) 55%,
+    rgba(0,0,0,0) 100%
+  );
+}
+
+.hero-title{
+  color:#fff;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:.2px;
+  text-shadow:0 8px 25px rgba(0,0,0,.6);
+}
+
+.hero-sub{
+  margin-top:6px;
+  max-width:640px;
+  color:#ffffff;
+  font-weight:400;
+  text-shadow:0 6px 18px rgba(0,0,0,.6);
+}
+
+.hero-ctas{
+  margin-top:12px;
+  display:flex;
+  gap:12px;
+}
+
+/* ================= FEATURED CAROUSEL (LOOP REAL) ================= */
+
+.featured-section{
+  position: relative;
+  padding: 28px 24px 40px;  /* más aire vertical */
+}
+
+.featured-title{
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.featured-carousel{
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+
+  padding: 4px 6px;
+
+  /* fade premium compatible con Chrome */
+-webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+}
+
+.carousel-track{
+  display: flex;
+  width: max-content;
+  will-change: transform;
+
+  /* importante: NO uses gap aquí para el truco del -50% */
+  gap: 0;
+
+  animation: scrollFeatured 32s linear infinite;
+}
+
+.featured-carousel:hover .carousel-track{
+  animation-play-state: paused;
+}
+
+.track-group{
+  display: flex;
+  align-items: stretch;
+  gap: 28px;          /* espacio entre cards */
+  flex: 0 0 auto;     /* evita que el grupo intente estirarse */
+}
+
+/* separación exacta entre grupo1 y grupo2 */
+.track-group:first-child{
+  margin-right: 18px;
+}
+
+/* Cards */
+.mini-card{
+  flex: 0 0 auto;
+  width: 300px;        /* antes 220 */
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.mini-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.mini-card img{
+  width: 100%;
+  height: 200px;       /* antes 130 */
+  object-fit: cover;
+  display: block;
+}
+
+.mini-caption{
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loop perfecto: 2 grupos idénticos */
+@keyframes scrollFeatured{
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ================= REVIEWS CAROUSEL (LOOP REAL) ================= */
+
+.reviews-section{
+  position: relative;
+}
+
+.reviews-title{
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+/* Contenedor que recorta y aplica fade como el featured */
+.reviews-carousel{
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 4px 6px;
+
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+}
+
+/* Track animado */
+.reviews-track{
+  display:flex;
+  width:max-content;
+  will-change: transform;
+
+  /* igual que featured: SIN gap aquí */
+  gap: 0;
+
+  /* para que vaya “opuesto” al de arriba */
+  animation: scrollReviews 28s linear infinite;
+}
+
+/* Pausa al hover */
+.reviews-carousel:hover .reviews-track{
+  animation-play-state: paused;
+}
+
+/* Grupo duplicado */
+.reviews-group{
+  display:flex;
+  align-items: stretch;
+  gap: 18px;
+  flex: 0 0 auto;
+}
+
+/* separación exacta entre grupo1 y grupo2 */
+.reviews-group:first-child{
+  margin-right: 18px;
+}
+
+/* Tarjeta de review (compacta, premium, no gigante) */
+.review-card{
+  flex: 0 0 auto;
+  width: 360px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,.06);
+  padding: 14px;
+  display:flex;
+  align-items:flex-start;
+  gap: 12px;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.review-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+/* Avatar pequeño (el problema principal era que no tenía tamaño fijo) */
+.review-avatar{
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  display:block;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+/* Texto */
+.review-meta{
+  min-width: 0;
+}
+
+.review-name{
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.review-text{
+  font-size: 0.90rem;
+  color: rgba(0,0,0,.65);
+  line-height: 1.25;
+}
+
+/* Loop perfecto: 2 grupos idénticos */
+@keyframes scrollReviews{
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+/* ===== Acciones en lista (Hoteles Places) ===== */
+.list-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.list-actions select{
+  width: 110px;
+}
+
+/* ===== Botón flotante en mapa ===== */
+.map-canvas{
+  position: relative; /* necesario para el FAB */
+}
+
+.map-fab{
+  position:absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 14px 30px rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+
+.map-fab:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.22);
+}
+
+.map-canvas { position: relative; }
+
+.map-fab{
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 10px 22px rgba(0,0,0,.12);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.map-fab:hover{ transform: translateY(-1px); }
+
+/* ====== Map floating action button ====== */
+.map-canvas{
+  position: relative; /* necesario para que el botón flote dentro */
+}
+
+.map-fab{
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 14px 30px rgba(0,0,0,.14);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.map-fab:hover{
+  transform: translateY(-1px);
+}
