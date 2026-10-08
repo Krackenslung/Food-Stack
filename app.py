@@ -44,7 +44,7 @@ def test():
 
 @app.route("/")
 def root():
-    return send_from_directory(FRONTEND_DIR, "login.html")
+    return send_from_directory(FRONTEND_DIR, "home.html")
 
 
 @app.route("/<path:resource>")
