@@ -84,3 +84,32 @@ def test_cors_only_for_the_configured_origin():
 def test_no_cors_headers_when_origin_not_configured(client):
     response = client.get("/api/test", headers={"Origin": "http://localhost:5173"})
     assert "Access-Control-Allow-Origin" not in response.headers
+
+
+def test_serves_the_built_spa_with_a_fallback_to_index(tmp_path, config):
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<div id=root></div>")
+    (tmp_path / "assets" / "app-abc123.js").write_text("console.log(1)")
+    client = create_app(config, frontend_dir=tmp_path).test_client()
+
+    home = client.get("/")
+    assert b"id=root" in home.data and home.headers["Cache-Control"] == "no-cache"
+    deep_link = client.get("/admin/products/7")  # a client-side route
+    assert deep_link.status_code == 200 and b"id=root" in deep_link.data
+    asset = client.get("/assets/app-abc123.js")
+    assert b"console.log" in asset.data and "immutable" in asset.headers["Cache-Control"]
+    assert client.get("/api/nope").status_code == 404  # API paths never fall back to the SPA
+
+
+def test_spa_routes_do_not_leak_files_outside_the_build(tmp_path, config):
+    (tmp_path / "dist").mkdir()
+    (tmp_path / "dist" / "index.html").write_text("<div id=root></div>")
+    (tmp_path / "secret.txt").write_text("nope")
+    client = create_app(config, frontend_dir=tmp_path / "dist").test_client()
+    assert b"nope" not in client.get("/../secret.txt").data
+    assert b"nope" not in client.get("/%2e%2e/secret.txt").data
+
+
+def test_an_unbuilt_frontend_answers_503(tmp_path, config):
+    response = create_app(config, frontend_dir=tmp_path).test_client().get("/menu")
+    assert (response.status_code, response.get_json()["errorCode"]) == (503, "FRONTEND_NOT_BUILT")

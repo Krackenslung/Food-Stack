@@ -9,7 +9,7 @@ from backend.errors import AppError, RecordNotFoundException
 from backend.Services.container import Services
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
+FRONTEND_DIR = BASE_DIR / "frontend" / "dist"  # built by `npm run build`
 
 logger = logging.getLogger(__name__)
 
@@ -106,25 +106,37 @@ def register_error_handlers(app, config):
 
 
 def register_frontend(app, frontend_dir):
+    """Serve the built React app. Real files (assets, images) are sent as they are and every
+    other non-API path gets index.html so React Router can handle the route."""
+    index = frontend_dir / "index.html"
+
+    def spa():
+        if not index.is_file():
+            return _error_response(
+                "The frontend is not built. Run `npm run build` in frontend/.",
+                503,
+                "FRONTEND_NOT_BUILT",
+            )
+        response = send_from_directory(frontend_dir, "index.html")
+        response.headers["Cache-Control"] = "no-cache"  # new deploys must reach users at once
+        return response
+
     @app.route("/")
     def root():
-        return send_from_directory(frontend_dir, "home.html")
+        return spa()
 
     @app.route("/<path:resource>")
     def frontend_resource(resource):
         if resource.startswith("api/"):
             return _error_response("API route not found.", 404, "NOT_FOUND")
 
-        direct_target = frontend_dir / resource
-        if direct_target.is_file():
-            return send_from_directory(frontend_dir, resource)
-
-        if "." not in resource:
-            html_target = frontend_dir / f"{resource}.html"
-            if html_target.is_file():
-                return send_from_directory(frontend_dir, f"{resource}.html")
-
-        return send_from_directory(frontend_dir, "login.html")
+        target = (frontend_dir / resource).resolve()
+        if frontend_dir.resolve() in target.parents and target.is_file():
+            response = send_from_directory(frontend_dir, resource)
+            if resource.startswith("assets/"):  # hashed file names: cache for a year
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return response
+        return spa()
 
 
 def create_app(

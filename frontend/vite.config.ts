@@ -1,38 +1,11 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import type { Plugin } from 'vite'
-
-/**
- * The legacy static pages (menu.html, cart.html, login.html, signup.html…) still live in this
- * folder until Phase 7 and would shadow the SPA routes of the same name in the dev server.
- * Send every extension-less page request to index.html so React Router owns the routes.
- */
-function spaFirst(): Plugin {
-  return {
-    name: 'foodstack-spa-first',
-    configureServer(server) {
-      server.middlewares.use((req, _res, next) => {
-        const path = (req.url ?? '').split('?')[0]
-        const wantsHtml = (req.headers.accept ?? '').includes('text/html')
-        if (
-          wantsHtml &&
-          !path.includes('.') &&
-          !path.startsWith('/@') &&
-          !path.startsWith('/api')
-        ) {
-          req.url = '/index.html'
-        }
-        next()
-      })
-    },
-  }
-}
 
 // Dev: Vite on :5173 proxies /api to the Flask server on :5000.
-// Build: outputs frontend/dist (served by Flask in production, wired up in a later phase).
+// Build: outputs frontend/dist (served by Flask in production).
 export default defineConfig({
-  plugins: [react(), spaFirst()],
+  plugins: [react()],
   server: {
     port: 5173,
     proxy: {

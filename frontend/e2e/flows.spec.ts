@@ -14,6 +14,7 @@ async function signIn(page: Page, role: keyof typeof ACCOUNTS) {
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.waitForURL((url) => url.pathname !== '/login') // the session cookie is set by then
 }
 
 test.beforeEach(async ({ page }) => {

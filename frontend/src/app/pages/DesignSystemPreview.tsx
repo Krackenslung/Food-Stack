@@ -109,7 +109,7 @@ export function DesignSystemPreview() {
           price="$11.49"
           meta="620 kcal"
           rating="4.8"
-          image="/assets/images/burgers/bbq-bacon-burger.jpg"
+          image="/menu/bbq-bacon.jpg"
           addLabel={t('common.addToCart')}
         />
         <KpiCard label="Revenue today" value="$4,286" delta="▲ 12.4%" period="vs. last week" />
