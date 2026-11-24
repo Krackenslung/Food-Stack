@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
+import { useCartStore } from '../features/cart/cartStore'
+import i18n from '../lib/i18n'
 
 // Newer Node versions ship an experimental global `localStorage` that shadows jsdom's and is
 // unusable without --localstorage-file. Tests always get a plain in-memory Storage instead.
@@ -32,9 +34,11 @@ for (const target of [window, globalThis]) {
   Object.defineProperty(target, 'localStorage', { value: storage, configurable: true })
 }
 
-afterEach(() => {
+afterEach(async () => {
   cleanup()
   storage.clear()
+  useCartStore.setState({ items: [], promoCode: '', fulfillmentType: 'pickup' })
+  if (i18n.language !== 'en') await i18n.changeLanguage('en')
   document.documentElement.removeAttribute('data-theme')
 })
 

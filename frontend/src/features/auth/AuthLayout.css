@@ -1,0 +1,139 @@
+.fs-auth {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  gap: var(--space-32);
+  min-height: 100vh;
+  padding: var(--space-32);
+  background: var(--color-surface-page);
+}
+
+.fs-auth__visual {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 640px;
+  overflow: hidden;
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-xl);
+  color: var(--color-on-dark);
+}
+
+.fs-auth__collage {
+  position: absolute;
+  inset: 0;
+}
+
+.fs-auth__collage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(18 13 10 / 10%),
+    rgb(18 13 10 / 82%) 55%,
+    rgb(18 13 10 / 96%)
+  );
+}
+
+.fs-auth__photo {
+  position: absolute;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+}
+
+.fs-auth__photo--a {
+  top: -4%;
+  left: -6%;
+  width: 62%;
+  height: 52%;
+  transform: rotate(-3deg);
+}
+
+.fs-auth__photo--b {
+  top: 0;
+  right: -8%;
+  width: 52%;
+  height: 34%;
+  transform: rotate(4deg);
+}
+
+.fs-auth__photo--c {
+  top: 34%;
+  right: -4%;
+  width: 62%;
+  height: 40%;
+  transform: rotate(-2deg);
+}
+
+.fs-auth__copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: 50px;
+}
+
+.fs-auth__copy h2 {
+  margin: var(--space-8) 0 0;
+  letter-spacing: -2px;
+}
+
+.fs-auth__copy p {
+  margin: 0;
+  max-width: 480px;
+  color: var(--color-ink-300);
+}
+
+.fs-auth__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fs-auth__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-auth__home {
+  display: none;
+}
+
+.fs-auth__form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-16);
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+  padding-bottom: var(--space-48);
+}
+
+.fs-auth__form h1 {
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.fs-auth__subtitle {
+  margin: calc(var(--space-8) * -1) 0 var(--space-8);
+  color: var(--color-ink-500);
+}
+
+@media (width <= 900px) {
+  .fs-auth {
+    grid-template-columns: 1fr;
+    padding: var(--space-16);
+  }
+
+  .fs-auth__visual {
+    display: none;
+  }
+
+  .fs-auth__home {
+    display: inline-flex;
+  }
+}

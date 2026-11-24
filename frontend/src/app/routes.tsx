@@ -1,4 +1,13 @@
 import type { RouteObject } from 'react-router-dom'
+import { CartPage } from '../features/cart/CartPage'
+import { CheckoutPage } from '../features/checkout/CheckoutPage'
+import { LandingPage } from '../features/landing/LandingPage'
+import { LoginPage } from '../features/auth/LoginPage'
+import { MenuPage } from '../features/menu/MenuPage'
+import { ProductModal } from '../features/menu/ProductModal'
+import { MyOrdersPage } from '../features/orders/MyOrdersPage'
+import { OrderTrackingPage } from '../features/orders/OrderTrackingPage'
+import { SignupPage } from '../features/auth/SignupPage'
 import { AdminLayout } from './layouts/AdminLayout'
 import { CustomerLayout } from './layouts/CustomerLayout'
 import { DesignSystemPreview } from './pages/DesignSystemPreview'
@@ -8,23 +17,24 @@ import { RequireRole } from './RequireRole'
 
 const screen = (titleKey: string) => <ScreenPlaceholder titleKey={titleKey} />
 
-/** Screen → route map from CLAUDE.md. Real screens replace the placeholders in Phases 3 and 6. */
+/** Screen -> route map from CLAUDE.md. Customer screens are real (Phase 3); staff/admin are Phase 6. */
 export const routes: RouteObject[] = [
   {
     element: <CustomerLayout />,
     children: [
-      { path: '/', element: screen('pages.landing') },
-      { path: '/menu', element: screen('pages.menu') },
-      { path: '/menu/:productId', element: screen('pages.product') }, // modal over the menu
-      { path: '/cart', element: screen('pages.cart') },
-      { path: '/login', element: screen('pages.login') },
-      { path: '/signup', element: screen('pages.signup') },
+      { path: '/', element: <LandingPage /> },
+      {
+        path: '/menu',
+        element: <MenuPage />,
+        // /menu/:productId renders the customization modal over the menu.
+        children: [{ path: ':productId', element: <ProductModal /> }],
+      },
+      { path: '/cart', element: <CartPage /> },
       {
         element: <RequireRole roles={['customer']} />,
         children: [
-          { path: '/checkout', element: screen('pages.checkout') },
-          { path: '/orders/:id', element: screen('pages.tracking') },
-          { path: '/account/orders', element: screen('pages.myOrders') },
+          { path: '/orders/:id', element: <OrderTrackingPage /> },
+          { path: '/account/orders', element: <MyOrdersPage /> },
         ],
       },
       // Visual QA page for the design system, development builds only.
@@ -32,6 +42,13 @@ export const routes: RouteObject[] = [
         ? [{ path: '/_design-system', element: <DesignSystemPreview /> }]
         : []),
     ],
+  },
+  // Full-screen flows with their own chrome.
+  { path: '/login', element: <LoginPage /> },
+  { path: '/signup', element: <SignupPage /> },
+  {
+    element: <RequireRole roles={['customer']} />,
+    children: [{ path: '/checkout', element: <CheckoutPage /> }],
   },
   {
     element: <AdminLayout />,

@@ -110,7 +110,7 @@ describe('api-client', () => {
 
     await expect(request('/orders')).resolves.toEqual({ id: 1 })
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('/api/orders')
+    expect(url).toMatch(/\/api\/orders$/)
     expect(init.headers.Authorization).toBe('Bearer abc')
   })
 

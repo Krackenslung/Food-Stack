@@ -1,0 +1,59 @@
+.fs-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-48) var(--space-24);
+  overflow-y: auto;
+  background: rgb(18 13 10 / 55%);
+  animation: fs-modal-fade 0.2s var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
+}
+
+.fs-modal {
+  width: 100%;
+  max-width: 1040px;
+  overflow: hidden;
+  background: var(--color-surface-card);
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  animation: fs-modal-in 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fs-modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fs-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes fs-sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* Mobile: bottom sheet that fills the screen height. */
+@media (width <= 767px) {
+  .fs-modal__overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .fs-modal {
+    max-width: none;
+    max-height: 100dvh;
+    border-radius: 28px 28px 0;
+    overflow-y: auto;
+    animation: fs-sheet-in 0.24s cubic-bezier(0.2, 0, 0, 1);
+  }
+}

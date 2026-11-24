@@ -253,6 +253,12 @@ tests/                      # pytest: services with a fake connection, controlle
 ### Frontend (Target)
 **Done in Phase 2:** the Vite + React 18 + TypeScript app lives in `frontend/` next to the legacy pages (`index.html`, `src/`, `package.json`). It has `design-system/` (tokens.css light + dark, typography, motion tokens, the 10 Figma components + `TabBar`, Lucide icons), the router with every route in the screen map as a placeholder, role guards (`RequireRole`), `CustomerLayout` / `MobileTabLayout` / `AdminLayout`, theme + language + auth providers, `locales/en.json` + `es.json`, `lib/api-client.ts`, and Vitest tests. **Not done:** all real screens (Phase 3/6), Tailwind, Zustand cart, MSW demo mode, Playwright, and Flask serving `frontend/dist`.
 
+**Done in Phase 3:** all nine customer screens under `src/features/` (`landing`, `menu` incl. the product modal and cart panel, `cart`, `checkout`, `orders` for tracking and history, `auth`), a Zustand cart persisted in localStorage (`features/cart/cartStore.ts`), TanStack Query hooks (`features/shared/queries.ts`), a toast provider, `Modal` / `Checkbox` / `Textarea` / `SegmentedControl` / `RadioCard` / `Skeleton` / `ErrorBanner` / `EmptyState` in the design system, and the mobile bottom-sheet modal and floating cart bar. Totals are **never computed in the UI**: every price comes from `POST /cart/quote`.
+
+**Mock API (demo mode).** `src/mocks/` implements the contract with MSW (catalog of 17 products, pricing that mirrors `backend/Services/order_service.py` in integer cents, auth, checkout, orders that advance received -> preparing -> ready on a timer). It is ON for `npm run dev` and OFF for production builds. Toggle with `?demo=1|0`, `localStorage['foodstack-demo-mode']` or `VITE_MOCK_API`. `localStorage['foodstack-mock-open']` = `1` (default) / `0` (store closed) / `auto` (real 11:00-23:00 America/Tijuana). Seeded accounts are the ones from `scripts/seed_users.py`. Tests use the same handlers through `src/test/msw.ts` (`setupMockApi()`) and `src/test/render.tsx` (`renderApp`, `signInAs`).
+
+**Phase 3 status (deliberately left out because the data or backend does not exist):** product ratings and the size picker, favorites, reward points, saved addresses/payment methods, the "SMS updates" card, the My Orders stats row and search, "Remember me" / "Forgot password", the Google button (Phase 5), card payment (disabled "Coming soon" until Phase 4; every order is pay-at-counter), the trust stats and testimonial on Landing, and Deals/Locations links. Cart line names are stored in the language active when the item was added.
+
 React 18 + Vite + TypeScript, built to `frontend/dist` and served by Flask (same origin in production; the Vite proxy in development).
 ```
 frontend/src/
@@ -351,6 +357,8 @@ STORE_TIMEZONE=America/Tijuana  STORE_HOURS="mon-sun 11:00-23:00"
 - **Every status change** writes an `Order_Status_History` row with `Changed_By_User_Id`.
 
 ## API contract (Target; all under `/api`, all return the `{status, data | errorMessage, errorCode}` envelope)
+
+> **Backend status:** none of these endpoints exist in Flask yet; the frontend runs on MSW mocks (`src/mocks/`). The typed DTOs are in `frontend/src/lib/api/types.ts`. Phase 3 relied on these **proposed extensions** that the real backend must implement: `GET /store` (name, address, timezone, currency, `isOpen`, `opensAt`, `closesAt`, `waitMinutes`); `isFeatured`, `prepTimeMin`/`prepTimeMax` and `allowCustomization` on products; `lang` on `/menu`, `/products/:id`, `/me/orders` and `/orders/:id`; `status=active|completed|cancelled` on `/me/orders`; `/auth/*` paths instead of the legacy `/login`, `/user`; `productIngredientId` on order-line ingredients; HTTP 409 `STORE_CLOSED` from `/checkout`.
 
 | Method & path | Auth | Request → `data` |
 |---|---|---|
@@ -457,7 +465,7 @@ Setup: `docs/sql/schema.sql` (baseline) → `docs/sql/migrations/NNN_*.sql` (ide
 - [x] Database: migrations 001–007, the 4-category seed and `scripts/migrate.py`.
 - [ ] Phase 1: `app_factory`, `config`, `Services/` layer, update the models and controllers for the new columns, pytest + Ruff. (Done: app_factory, config, errors, order_service, pytest + Ruff + CI step. **Remaining:** model/controller column updates and wiring the service into controllers, blocked until migrations 001-007 are committed to the repo.)
 - [x] Phase 2: Vite + React + TS app, `tokens.css` (light + dark), design-system components, routing, i18n + theme scaffolding. (Components verified against Figma in light and dark. Provisional: `--shadow-md/lg`, `--color-on-dark`, `--radius-tile/card` are not in the Figma variables. Mobile floating cart bar waits for the Phase 3 cart store.)
-- [ ] Phase 3: Customer screens (Landing, Menu, Product modal, Cart, Checkout without payment, Tracking, My Orders, Login, Sign up) plus the mobile layouts.
+- [x] Phase 3: Customer screens (Landing, Menu, Product modal, Cart, Checkout without payment, Tracking, My Orders, Login, Sign up) plus the mobile layouts. (Runs on MSW mocks of the API contract; the Flask endpoints do not exist yet. See "Phase 3 status" below for what was left out on purpose.)
 - [ ] Phase 4: Stripe (PaymentIntents, webhook, refunds, promo codes).
 - [ ] Phase 5: Google OAuth.
 - [ ] Phase 6: Staff Kitchen Board and Admin (Dashboard, Orders + drawer, Products, Product Editor with ingredients and image upload).

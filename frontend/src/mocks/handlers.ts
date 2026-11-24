@@ -1,0 +1,456 @@
+import { http, HttpResponse } from 'msw'
+import type {
+  CheckoutRequest,
+  MenuProduct,
+  OrderDetail,
+  OrderHistoryEntry,
+  OrderStatus,
+  OrderSummary,
+  ProductDetail,
+  QuoteRequest,
+  SignupRequest,
+  StoreInfo,
+} from '../lib/api/types'
+import { normalizeLanguage } from '../lib/language'
+import type { Language } from '../lib/language'
+import { MOCK_CATEGORIES, MOCK_PRODUCTS, productIngredientId } from './catalog'
+import type { MockProduct } from './catalog'
+import { db } from './db'
+import type { MockOrder, MockUser } from './db'
+import { MockValidationError, quoteCart } from './pricing'
+
+// Matches both the dev proxy ("/api/...") and an absolute VITE_API_BASE_URL.
+const route = (path: string) => `*/api${path}`
+
+const ok = (data: unknown, status = 200) => HttpResponse.json({ status: 0, data }, { status })
+
+const fail = (message: string, errorCode: string, status: number) =>
+  HttpResponse.json({ status: 1, errorMessage: message, errorCode }, { status })
+
+const langOf = (url: URL): Language => normalizeLanguage(url.searchParams.get('lang')) ?? 'en'
+
+function currentUser(): MockUser | null {
+  const id = db.sessionUserId()
+  return db.users().find((user) => user.id === id) ?? null
+}
+
+// ---- store -----------------------------------------------------------------
+
+const OPENS = 11
+const CLOSES = 23
+
+function storeInfo(): StoreInfo {
+  let isOpen: boolean
+  const override = (() => {
+    try {
+      return window.localStorage.getItem('foodstack-mock-open')
+    } catch {
+      return null
+    }
+  })()
+  if (override !== 'auto') {
+    // Demo default: always open, so demos work at any hour. '0' forces closed,
+    // 'auto' follows the real hours (11:00-23:00 America/Tijuana).
+    isOpen = override !== '0'
+  } else {
+    const hour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: 'America/Tijuana',
+      }).format(new Date()),
+    )
+    isOpen = hour >= OPENS && hour < CLOSES
+  }
+
+  return {
+    name: 'FoodStack Zona Río',
+    address: 'Blvd. Sánchez Taboada 10488, Tijuana, B.C.',
+    timezone: 'America/Tijuana',
+    currency: 'USD',
+    isOpen,
+    opensAt: `${OPENS}:00`,
+    closesAt: `${CLOSES}:00`,
+    waitMinutes: 15,
+  }
+}
+
+// ---- catalog ---------------------------------------------------------------
+
+function toMenuProduct(product: MockProduct, lang: Language): MenuProduct {
+  return {
+    id: product.id,
+    name: product.name[lang],
+    description: product.description[lang],
+    image: product.image,
+    price: product.price,
+    calories: product.calories,
+    prepTimeMin: product.prepTimeMin,
+    prepTimeMax: product.prepTimeMax,
+    isAvailable: true,
+    stock: null,
+    isFeatured: product.featured,
+  }
+}
+
+function toProductDetail(product: MockProduct, lang: Language): ProductDetail {
+  const category = MOCK_CATEGORIES.find((c) => c.slug === product.category)!
+  return {
+    ...toMenuProduct(product, lang),
+    category: { id: category.id, slug: category.slug, name: category.name[lang] },
+    allowCustomization: product.allowCustomization,
+    ingredients: product.ingredients.map((ingredient, index) => ({
+      productIngredientId: productIngredientId(product.id, index),
+      name: ingredient.name[lang],
+      extraPrice: ingredient.extraPrice,
+      default: ingredient.default,
+      max: ingredient.max,
+      removable: ingredient.removable,
+    })),
+  }
+}
+
+// ---- orders ----------------------------------------------------------------
+
+const RECEIVED_FOR_MS = 20_000
+const PREPARING_FOR_MS = 60_000
+
+/** Demo progression: received -> preparing after 20s -> ready after 60s. */
+function statusOf(order: MockOrder, now = Date.now()): OrderStatus {
+  if (order.status === 'cancelled' || order.status === 'completed') return order.status
+  const age = now - order.createdAt
+  if (age < RECEIVED_FOR_MS) return 'received'
+  if (age < PREPARING_FOR_MS) return 'preparing'
+  return 'ready'
+}
+
+function historyOf(order: MockOrder, now = Date.now()): OrderHistoryEntry[] {
+  const iso = (ms: number) => new Date(ms).toISOString()
+  const entries: OrderHistoryEntry[] = [
+    { fromStatus: null, toStatus: 'received', createdAt: iso(order.createdAt) },
+  ]
+  if (order.status === 'cancelled') {
+    entries.push({
+      fromStatus: 'received',
+      toStatus: 'cancelled',
+      createdAt: iso(order.cancelledAt ?? now),
+    })
+    return entries
+  }
+  const age = now - order.createdAt
+  if (age >= RECEIVED_FOR_MS) {
+    entries.push({
+      fromStatus: 'received',
+      toStatus: 'preparing',
+      createdAt: iso(order.createdAt + RECEIVED_FOR_MS),
+    })
+  }
+  if (age >= PREPARING_FOR_MS) {
+    entries.push({
+      fromStatus: 'preparing',
+      toStatus: 'ready',
+      createdAt: iso(order.createdAt + PREPARING_FOR_MS),
+    })
+  }
+  return entries
+}
+
+function productOf(id: number): MockProduct {
+  return MOCK_PRODUCTS.find((p) => p.id === id)!
+}
+
+function baseSummary(order: MockOrder): Omit<OrderSummary, 'items'> {
+  return {
+    id: order.id,
+    orderNumber: `FS-${1000 + order.id}`,
+    status: statusOf(order),
+    paymentStatus: 'pay_at_counter',
+    total: order.quote.total,
+    createdAt: new Date(order.createdAt).toISOString(),
+    itemCount: order.lines.reduce((sum, line) => sum + line.quantity, 0),
+  }
+}
+
+function toSummary(order: MockOrder, lang: Language): OrderSummary {
+  return {
+    ...baseSummary(order),
+    items: order.lines.map((line) => ({
+      name: productOf(line.productId).name[lang],
+      image: productOf(line.productId).image,
+      quantity: line.quantity,
+    })),
+  }
+}
+
+function toDetail(order: MockOrder, lang: Language): OrderDetail {
+  const status = statusOf(order)
+
+  const longestPrep = Math.max(...order.lines.map((l) => productOf(l.productId).prepTimeMax))
+  const readyAt = order.createdAt + longestPrep * 60_000
+  const active = status === 'received' || status === 'preparing'
+
+  return {
+    ...baseSummary(order),
+    paymentMethod: order.request.paymentMethod,
+    fulfillmentType: order.request.fulfillmentType,
+    subtotal: order.quote.subtotal,
+    discount: order.quote.discount,
+    serviceFee: order.quote.serviceFee,
+    deliveryFee: order.quote.deliveryFee,
+    tax: order.quote.tax,
+    promoCode: order.promoCode,
+    contact: order.request.contact,
+    deliveryAddress: order.request.deliveryAddress ?? null,
+    scheduledFor: order.request.scheduledFor ?? null,
+    lines: order.lines.map((line, index) => {
+      const product = productOf(line.productId)
+      const input = order.request.items[index]
+      return {
+        id: index + 1,
+        productId: line.productId,
+        name: product.name[lang],
+        image: product.image,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        lineTotal: line.lineTotal,
+        notes: input?.notes ?? '',
+        ingredients: product.ingredients.map((rule, i) => ({
+          productIngredientId: productIngredientId(product.id, i),
+          name: rule.name[lang],
+          default: rule.default,
+          quantity:
+            input?.ingredients.find(
+              (choice) => choice.productIngredientId === productIngredientId(product.id, i),
+            )?.quantity ?? rule.default,
+        })),
+      }
+    }),
+    history: historyOf(order),
+    eta: active
+      ? {
+          minutes: Math.max(1, Math.ceil((readyAt - Date.now()) / 60_000)),
+          readyAt: new Date(readyAt).toISOString(),
+        }
+      : null,
+  }
+}
+
+function validationFailure(error: unknown) {
+  if (error instanceof MockValidationError) return fail(error.message, error.errorCode, 422)
+  throw error
+}
+
+// ---- handlers --------------------------------------------------------------
+
+export const handlers = [
+  http.get(route('/test'), () => ok({ message: 'mock api' })),
+
+  http.get(route('/store'), () => ok(storeInfo())),
+
+  http.get(route('/menu'), ({ request }) => {
+    const lang = langOf(new URL(request.url))
+    return ok(
+      MOCK_CATEGORIES.map((category) => ({
+        category: { id: category.id, slug: category.slug, name: category.name[lang] },
+        products: MOCK_PRODUCTS.filter((p) => p.category === category.slug).map((p) =>
+          toMenuProduct(p, lang),
+        ),
+      })),
+    )
+  }),
+
+  http.get(route('/products/:id'), ({ params, request }) => {
+    const product = MOCK_PRODUCTS.find((p) => p.id === Number(params.id))
+    if (!product) return fail('Product not found.', 'RECORD_NOT_FOUND', 404)
+    return ok(toProductDetail(product, langOf(new URL(request.url))))
+  }),
+
+  http.post(route('/cart/quote'), async ({ request }) => {
+    const body = (await request.json()) as QuoteRequest
+    const user = currentUser()
+    const hasPriorOrder = user ? db.orders().some((o) => o.userId === user.id) : false
+    try {
+      return ok(quoteCart(body.items ?? [], body.fulfillmentType, body.promoCode, hasPriorOrder))
+    } catch (error) {
+      return validationFailure(error)
+    }
+  }),
+
+  // ---- auth ----
+  http.post(route('/auth/signup'), async ({ request }) => {
+    const body = (await request.json()) as SignupRequest
+    if (!body.email || !body.password || !body.name) {
+      return fail('Missing fields.', 'VALIDATION_ERROR', 422)
+    }
+    const users = db.users()
+    if (users.some((u) => u.email.toLowerCase() === body.email.toLowerCase())) {
+      return fail('That email is already registered.', 'EMAIL_TAKEN', 409)
+    }
+    // Public signup always creates a customer (the server never trusts a client role).
+    const user: MockUser = {
+      id: Math.max(0, ...users.map((u) => u.id)) + 1,
+      name: body.name,
+      lastname: body.lastname,
+      email: body.email,
+      phoneNumber: body.phoneNumber,
+      password: body.password,
+      role: 'customer',
+    }
+    db.saveUsers([...users, user])
+    db.setSession(user.id)
+    return ok({ user: publicUser(user) }, 201)
+  }),
+
+  http.post(route('/auth/login'), async ({ request }) => {
+    const body = (await request.json()) as { email: string; password: string }
+    const user = db
+      .users()
+      .find(
+        (u) =>
+          u.email.toLowerCase() === String(body.email).toLowerCase() &&
+          u.password === body.password,
+      )
+    if (!user) return fail('Invalid email or password.', 'INVALID_CREDENTIALS', 401)
+    db.setSession(user.id)
+    return ok({ user: publicUser(user) })
+  }),
+
+  http.post(route('/auth/logout'), () => {
+    db.setSession(null)
+    return ok({ message: 'Logged out' })
+  }),
+
+  http.get(route('/session'), () => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+    return ok({ user: publicUser(user) })
+  }),
+
+  // ---- checkout & orders ----
+  http.post(route('/checkout'), async ({ request }) => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+
+    const body = (await request.json()) as CheckoutRequest
+    if (!storeInfo().isOpen) return fail('The store is closed.', 'STORE_CLOSED', 409)
+
+    const { name, phone, email } = body.contact ?? { name: '', phone: '', email: '' }
+    if (!name?.trim() || !phone?.trim() || !/^\S+@\S+\.\S+$/.test(email ?? '')) {
+      return fail('Contact details are incomplete.', 'VALIDATION_ERROR', 422)
+    }
+    if (body.fulfillmentType === 'delivery' && !body.deliveryAddress?.trim()) {
+      return fail('A delivery address is required.', 'DELIVERY_ADDRESS_REQUIRED', 422)
+    }
+    if (body.paymentMethod !== 'counter') {
+      return fail('Card payments are not available yet.', 'PAYMENT_METHOD_UNAVAILABLE', 422)
+    }
+
+    try {
+      const orders = db.orders()
+      const quote = quoteCart(
+        body.items,
+        body.fulfillmentType,
+        body.promoCode,
+        orders.some((o) => o.userId === user.id),
+      )
+      if (body.promoCode && !quote.promo?.valid) {
+        return fail('Promo code is not valid.', quote.promo?.reason ?? 'PROMO_NOT_FOUND', 422)
+      }
+
+      const order: MockOrder = {
+        id: Math.max(0, ...orders.map((o) => o.id)) + 1,
+        userId: user.id,
+        createdAt: Date.now(),
+        status: 'received',
+        cancelledAt: null,
+        request: body,
+        lines: quote.lines,
+        quote: {
+          subtotal: quote.subtotal,
+          discount: quote.discount,
+          serviceFee: quote.serviceFee,
+          deliveryFee: quote.deliveryFee,
+          tax: quote.tax,
+          total: quote.total,
+        },
+        promoCode: quote.promo?.valid ? quote.promo.code : null,
+      }
+      db.saveOrders([...orders, order])
+      return ok(
+        { orderId: order.id, orderNumber: `FS-${1000 + order.id}`, total: quote.total },
+        201,
+      )
+    } catch (error) {
+      return validationFailure(error)
+    }
+  }),
+
+  http.get(route('/me/orders'), ({ request }) => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+    const url = new URL(request.url)
+    const lang = langOf(url)
+    const status = url.searchParams.get('status')
+    const page = Math.max(1, Number(url.searchParams.get('page') ?? 1))
+    const pageSize = Math.max(1, Number(url.searchParams.get('pageSize') ?? 5))
+
+    const active = new Set<OrderStatus>(['pending_payment', 'received', 'preparing', 'ready'])
+    const mine = db
+      .orders()
+      .filter((o) => o.userId === user.id)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((o) => toSummary(o, lang))
+      .filter((o) => {
+        if (!status || status === 'all') return true
+        if (status === 'active') return active.has(o.status)
+        return o.status === status
+      })
+
+    return ok({
+      items: mine.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      pageSize,
+      total: mine.length,
+    })
+  }),
+
+  http.get(route('/orders/:id'), ({ params, request }) => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+    const order = db.orders().find((o) => o.id === Number(params.id))
+    if (!order) return fail('Order not found.', 'RECORD_NOT_FOUND', 404)
+    if (order.userId !== user.id && user.role === 'customer') {
+      return fail('Forbidden', 'FORBIDDEN', 403)
+    }
+    return ok(toDetail(order, langOf(new URL(request.url))))
+  }),
+
+  http.post(route('/orders/:id/cancel'), ({ params }) => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+    const orders = db.orders()
+    const order = orders.find((o) => o.id === Number(params.id))
+    if (!order) return fail('Order not found.', 'RECORD_NOT_FOUND', 404)
+    if (order.userId !== user.id && user.role === 'customer') {
+      return fail('Forbidden', 'FORBIDDEN', 403)
+    }
+    // Customers can only cancel before the kitchen accepts (while "received").
+    if (statusOf(order) !== 'received') {
+      return fail('This order can no longer be cancelled.', 'ORDER_CANCEL_NOT_ALLOWED', 403)
+    }
+    order.status = 'cancelled'
+    order.cancelledAt = Date.now()
+    db.saveOrders(orders)
+    return ok({ status: 'cancelled' })
+  }),
+]
+
+function publicUser(user: MockUser) {
+  return {
+    id: user.id,
+    name: user.name,
+    lastname: user.lastname,
+    email: user.email,
+    role: user.role,
+  }
+}

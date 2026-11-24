@@ -1,0 +1,38 @@
+.fs-summary__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 var(--space-16);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.fs-summary__rows > div {
+  display: flex;
+  justify-content: space-between;
+  font: 400 14px/20px var(--font-sans);
+}
+
+.fs-summary__rows dt {
+  color: var(--color-ink-500);
+}
+
+.fs-summary__rows dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-ink-700);
+}
+
+.fs-summary__discount dt,
+.fs-summary__discount dd {
+  color: var(--color-success);
+}
+
+.fs-summary__total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: var(--space-16);
+  font: 700 18px/26px var(--font-sans);
+  letter-spacing: -0.2px;
+  color: var(--color-ink-900);
+}

@@ -1,0 +1,227 @@
+.fs-menu__header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: var(--space-48) 80px var(--space-24);
+}
+
+.fs-menu__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-400);
+}
+
+.fs-menu__crumbs [aria-current='page'] {
+  color: var(--color-ink-700);
+}
+
+.fs-menu__title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-menu__title-row h1 {
+  margin: 0 0 6px;
+  letter-spacing: -1px;
+}
+
+.fs-menu__subtitle {
+  margin: 0;
+  color: var(--color-ink-500);
+}
+
+.fs-menu__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) 14px;
+  background: var(--color-success-bg);
+  border-radius: var(--radius-full);
+  color: var(--color-success);
+  font: 600 14px/20px var(--font-sans);
+  white-space: nowrap;
+}
+
+.fs-menu__status span {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentcolor;
+}
+
+.fs-menu__status--closed {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.fs-menu__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-menu__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.fs-menu__sort select {
+  height: 42px;
+  padding-inline: 14px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-700);
+  font: 600 14px/20px var(--font-sans);
+}
+
+.fs-menu__query {
+  margin: 0;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-menu__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  padding: var(--space-8) 80px 80px;
+}
+
+.fs-menu__grid {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-32);
+  min-width: 0;
+}
+
+.fs-menu__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.fs-menu__section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fs-menu__section-head h2 {
+  margin: 0;
+  color: var(--color-ink-900);
+}
+
+.fs-menu__section-head .t-label-s {
+  color: var(--color-ink-400);
+}
+
+.fs-menu__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-24);
+}
+
+/* Floating cart bar: mobile only. */
+.fs-floating-cart {
+  display: none;
+}
+
+@media (width <= 1100px) {
+  .fs-cart-panel {
+    display: none;
+  }
+}
+
+@media (width <= 767px) {
+  .fs-menu__header {
+    padding: var(--space-16);
+  }
+
+  .fs-menu__title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fs-menu__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fs-menu__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--space-4);
+  }
+
+  .fs-menu__body {
+    padding: var(--space-8) var(--space-16) var(--space-24);
+  }
+
+  .fs-menu__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .fs-floating-cart {
+    position: fixed;
+    inset-inline: var(--space-16);
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-8) var(--space-12) var(--space-16);
+    background: var(--color-surface-dark);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    color: var(--color-on-dark);
+  }
+
+  .fs-floating-cart__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--color-brand-500);
+    border-radius: var(--radius-full);
+    color: var(--color-on-brand);
+    font: 700 14px/20px var(--font-sans);
+  }
+
+  .fs-floating-cart__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    font: 400 12px/16px var(--font-sans);
+    color: var(--color-ink-300);
+  }
+
+  .fs-floating-cart__text strong {
+    font: 600 14px/20px var(--font-sans);
+    color: var(--color-on-dark);
+  }
+
+  .fs-floating-cart__total {
+    font: 700 18px/26px var(--font-sans);
+  }
+
+  .fs-floating-cart__go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--color-brand-500);
+    border-radius: var(--radius-md);
+    color: var(--color-on-brand);
+  }
+}

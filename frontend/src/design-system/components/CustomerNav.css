@@ -81,6 +81,7 @@
 }
 
 .fs-customer-nav__count {
+  animation: fs-pop 0.24s cubic-bezier(0.3, 0, 0, 1.2);
   padding: 1px 7px;
   background: var(--color-brand-500);
   border-radius: var(--radius-full);
@@ -99,4 +100,10 @@
   border-radius: var(--radius-full);
   color: var(--color-brand-700);
   font: 600 14px/20px var(--font-sans);
+}
+
+@keyframes fs-pop {
+  50% {
+    transform: scale(1.2);
+  }
 }

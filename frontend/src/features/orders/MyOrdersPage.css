@@ -1,0 +1,234 @@
+.fs-orders {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--space-32);
+  align-items: start;
+}
+
+.fs-orders__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.fs-orders__profile,
+.fs-orders__menu {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+}
+
+.fs-orders__profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-24);
+  text-align: center;
+  font: 600 12px/16px var(--font-sans);
+  color: var(--color-ink-400);
+}
+
+.fs-orders__profile strong {
+  font: 700 18px/26px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-orders__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--space-8);
+  background: var(--color-brand-100);
+  border-radius: var(--radius-full);
+  color: var(--color-brand-700);
+  font: 700 22px/30px var(--font-sans);
+}
+
+.fs-orders__menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8);
+}
+
+.fs-orders__menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 44px;
+  padding-inline: var(--space-12);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-ink-700);
+  font: 600 14px/20px var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fs-orders__menu-item--active {
+  background: var(--color-brand-50);
+  color: var(--color-brand-600);
+  cursor: default;
+}
+
+.fs-orders__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.fs-orders__main h1 {
+  margin: 0 0 6px;
+  letter-spacing: -1px;
+}
+
+.fs-orders__main header p {
+  margin: 0;
+  color: var(--color-ink-500);
+}
+
+.fs-orders__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.fs-orders__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fs-order-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-24);
+  padding: var(--space-16) 20px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.fs-order-row--active {
+  border-color: var(--color-brand-500);
+  box-shadow: inset 0 0 0 1px var(--color-brand-500);
+}
+
+.fs-order-row__thumbs {
+  display: flex;
+  flex: none;
+  width: 124px;
+}
+
+.fs-order-row__thumbs img {
+  width: 48px;
+  height: 48px;
+  margin-right: -12px;
+  border: 2px solid var(--color-surface-card);
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.fs-order-row__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-order-row__info strong {
+  font: 700 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-order-row__info strong span {
+  margin-left: var(--space-8);
+  font: 600 12px/16px var(--font-sans);
+  color: var(--color-ink-400);
+}
+
+.fs-order-row__total {
+  min-width: 72px;
+  text-align: right;
+  font: 700 18px/26px var(--font-sans);
+  letter-spacing: -0.2px;
+  color: var(--color-ink-900);
+}
+
+.fs-order-row__track {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 44px;
+  padding-inline: 20px;
+  background: var(--color-brand-500);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-brand);
+  color: var(--color-on-brand);
+  font: 600 14px/20px var(--font-sans);
+  white-space: nowrap;
+}
+
+.fs-orders__pages {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-8);
+}
+
+.fs-orders__pages button {
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-card);
+  color: var(--color-ink-700);
+  font: 600 14px/20px var(--font-sans);
+  cursor: pointer;
+}
+
+.fs-orders__pages button[aria-current='page'] {
+  background: var(--color-surface-dark);
+  border-color: var(--color-surface-dark);
+  color: var(--color-on-dark);
+}
+
+.fs-orders__pages span {
+  align-self: center;
+  color: var(--color-ink-400);
+}
+
+@media (width <= 1000px) {
+  .fs-orders {
+    grid-template-columns: 1fr;
+  }
+
+  .fs-orders__side {
+    display: none;
+  }
+}
+
+@media (width <= 767px) {
+  .fs-order-row {
+    flex-wrap: wrap;
+    gap: var(--space-12);
+  }
+
+  .fs-order-row__thumbs {
+    width: auto;
+  }
+
+  .fs-order-row__info {
+    flex-basis: 60%;
+  }
+}

@@ -77,7 +77,7 @@ export function CustomerNav({
         <Link to={cartTo} className="fs-customer-nav__cart">
           <Cart size={18} aria-hidden="true" />
           <span>{cartLabel}</span>
-          <span className="fs-customer-nav__count" aria-hidden={cartCount === 0}>
+          <span key={cartCount} className="fs-customer-nav__count" aria-hidden={cartCount === 0}>
             {cartCount}
           </span>
         </Link>

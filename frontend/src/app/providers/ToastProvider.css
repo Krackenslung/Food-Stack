@@ -1,0 +1,33 @@
+.fs-toast-region {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--space-24) + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.fs-toast {
+  padding: var(--space-12) var(--space-24);
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-on-dark);
+  font: 600 14px/20px var(--font-sans);
+  animation: fs-toast-in 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fs-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Keep the toast above the mobile tab bar. */
+@media (width <= 767px) {
+  .fs-toast-region {
+    bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+}

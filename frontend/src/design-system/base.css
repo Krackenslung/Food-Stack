@@ -34,6 +34,18 @@ a {
   outline-offset: 2px;
 }
 
+.fs-page {
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: var(--space-48) 80px 80px;
+}
+
+@media (width <= 767px) {
+  .fs-page {
+    padding: var(--space-16) var(--space-16) var(--space-24);
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

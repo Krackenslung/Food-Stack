@@ -1,0 +1,201 @@
+.fs-product-modal__state {
+  padding: var(--space-32);
+}
+
+.fs-product-modal__body {
+  display: flex;
+  align-items: stretch;
+}
+
+.fs-product-modal__media {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  width: 440px;
+  min-height: 560px;
+  padding: 20px;
+  background-color: var(--color-surface-muted);
+  background-position: center;
+  background-size: cover;
+}
+
+.fs-product-modal__facts {
+  display: flex;
+  width: 100%;
+  padding: var(--space-12) var(--space-8);
+  background: var(--color-surface-card);
+  border-radius: var(--radius-lg);
+}
+
+.fs-product-modal__facts div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fs-product-modal__facts strong {
+  font: 700 18px/26px var(--font-sans);
+  letter-spacing: -0.2px;
+  color: var(--color-ink-900);
+}
+
+.fs-product-modal__facts span {
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-400);
+}
+
+.fs-product-modal__details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+  padding: 32px 32px var(--space-24);
+}
+
+.fs-product-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-product-modal__head h2 {
+  margin: var(--space-8) 0;
+  letter-spacing: -0.5px;
+  color: var(--color-ink-900);
+}
+
+.fs-product-modal__category {
+  color: var(--color-brand-600);
+}
+
+.fs-product-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-700);
+}
+
+.fs-product-modal__meta > span {
+  margin-inline: var(--space-4);
+  color: var(--color-ink-300);
+}
+
+.fs-product-modal__close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  color: var(--color-ink-900);
+  cursor: pointer;
+}
+
+.fs-product-modal__description {
+  margin: 0;
+  font: 400 16px/24px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-product-modal__section-head {
+  padding-bottom: var(--space-8);
+}
+
+.fs-product-modal__section-head h3 {
+  margin: 0;
+  color: var(--color-ink-900);
+}
+
+.fs-product-modal__ingredients {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fs-product-modal__ingredient {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.fs-product-modal__ingredient .fs-checkbox {
+  flex: 1;
+}
+
+.fs-product-modal__ingredient .fs-checkbox__label {
+  display: flex;
+  flex-direction: column;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-product-modal__ingredient-hint {
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-400);
+}
+
+.fs-product-modal__ingredient-hint--price {
+  color: var(--color-brand-600);
+}
+
+.fs-product-modal__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-top: auto;
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.fs-product-modal__add {
+  flex: 1;
+}
+
+/* Mobile bottom sheet (Figma M2): photo on top, sticky add bar. */
+@media (width <= 767px) {
+  .fs-product-modal__body {
+    flex-direction: column;
+  }
+
+  .fs-product-modal__media {
+    width: 100%;
+    min-height: 260px;
+  }
+
+  .fs-product-modal__facts {
+    display: none;
+  }
+
+  .fs-product-modal__details {
+    padding: var(--space-24) var(--space-16) 0;
+  }
+
+  .fs-product-modal__head {
+    flex-direction: row-reverse;
+  }
+
+  .fs-product-modal__footer {
+    position: sticky;
+    bottom: 0;
+    margin-inline: calc(var(--space-16) * -1);
+    padding: var(--space-16);
+    padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
+    background: var(--color-surface-card);
+  }
+}

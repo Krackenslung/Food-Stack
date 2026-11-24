@@ -5,6 +5,7 @@ import { readStoredLanguage } from '../../lib/language'
 import { readStoredTheme } from '../../lib/theme'
 import { AuthProvider, useAuth } from './AuthProvider'
 import { LanguageProvider, useLanguage } from './LanguageProvider'
+import { ToastProvider } from './ToastProvider'
 import { ThemeProvider, useTheme } from './ThemeProvider'
 
 /**
@@ -39,7 +40,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <LanguageProvider>
           <AuthProvider>
             <PreferenceSync />
-            {children}
+            <ToastProvider>{children}</ToastProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

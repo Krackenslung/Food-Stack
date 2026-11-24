@@ -1,3 +1,3 @@
 .fs-customer-main {
-  padding: var(--space-32) 80px;
+  min-height: calc(100vh - 80px);
 }
