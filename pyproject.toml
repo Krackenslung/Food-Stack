@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["frontend", "docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Legacy layers keep the pre-Phase-1 style; new code (config, errors, app_factory,
+# Services, tests) is held to the full rule set and formatted with `ruff format`.
+"backend/Models/*" = ["F403", "F405", "E501", "I001", "UP", "B"]
+"backend/Controllers/*" = ["F403", "F405", "F401", "E501", "I001", "UP", "B"]
+"backend/Security/*" = ["E501", "I001", "UP", "B"]
+"backend/Infrastructure/*" = ["E501", "I001", "UP", "B"]
+"scripts/*" = ["E402", "E501", "I001"]
+
+[tool.ruff.format]
+exclude = [
+  "backend/Models/*",
+  "backend/Controllers/*",
+  "backend/Security/*",
+  "backend/Infrastructure/*",
+  "scripts/*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

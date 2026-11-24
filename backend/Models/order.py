@@ -2,9 +2,8 @@ import json
 from datetime import datetime
 from ..Infrastructure.SQLServerConnection import *
 from .order_product import OrderProduct
+from backend.errors import RecordNotFoundException
 
-class RecordNotFoundException(Exception):
-    pass
 
 # -------------------------
 # ATTRIBUTES

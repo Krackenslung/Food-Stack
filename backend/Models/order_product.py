@@ -2,9 +2,8 @@ import json
 from ..Infrastructure.SQLServerConnection import *
 from .order_product_ingredient import OrderProductIngredient
 from .product import Product
+from backend.errors import RecordNotFoundException
 
-class RecordNotFoundException(Exception):
-    pass
 
 # -------------------------
 # ATTRIBUTES

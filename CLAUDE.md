@@ -131,13 +131,16 @@ Build these once in `src/design-system/components/` and compose screens from the
 **Current**
 ```bash
 python -m venv .venv && .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime deps + pytest + ruff
 cp .env.example .env            # fill in the env vars listed below
 python scripts/migrate.py --baseline --seed   # fresh DB: schema + migrations + catalog seed
 python scripts/migrate.py                     # existing DB: apply pending migrations only
 python scripts/migrate.py --status            # show applied/pending migrations
 python app.py                   # frontend + API at http://127.0.0.1:5000 (health: /api/test)
 python scripts/seed_users.py    # creates admin/staff/customer @foodstack.local test users
+pytest                          # backend tests (tests/); no database needed
+pytest tests/test_order_service.py::test_design_example_totals_28_80   # single test
+ruff check . && ruff format --check .   # lint + format (legacy layers are excluded from format)
 ```
 
 **Target (once the new frontend and tooling exist)**
@@ -146,15 +149,13 @@ cd frontend && npm install && npm run dev        # Vite dev server on :5173, pro
 npm run build                                    # outputs frontend/dist, which Flask serves in production
 npm run lint && npm run typecheck && npm test    # ESLint + tsc + Vitest
 npx playwright test                              # E2E: checkout, login, kitchen flow
-pytest                                           # backend tests (tests/)
-ruff check . && ruff format --check .
 stripe listen --forward-to localhost:5000/api/payments/webhook   # local Stripe webhooks
 ```
 
 - DB: see the **Database** section. `docs/sql/master_data_audit_cleanup.sql` is a manual audit script; never run it automatically. New schema changes go in numbered files under `docs/sql/migrations/` and must be idempotent (`IF NOT EXISTS` / `COL_LENGTH` checks, with `GO` between adding a column and using it).
 - Set `SQL_TRUST_SERVER_CERT=yes` for a local SQL Server with a self-signed certificate.
 - ODBC driver: read from `SQL_DRIVER`, default `ODBC Driver 18 for SQL Server`.
-- Production: every push to `main` deploys to Azure App Service (West US 3) through `.github/workflows/main_foodstack-api-jl.yml` (gunicorn, Python 3.11). **Target:** the workflow also runs `npm ci && npm run build` in `frontend/`, and runs the tests before deploying.
+- Production: every push to `main` deploys to Azure App Service (West US 3) through `.github/workflows/main_foodstack-api-jl.yml` (gunicorn, Python 3.11). The workflow runs `ruff` and `pytest` before deploying (Phase 1). **Target:** it will also run `npm ci && npm run build` in `frontend/`.
 
 ### Environment variables
 ```
@@ -204,6 +205,7 @@ Never commit `.env`. In Azure, secrets live in App Service → Configuration.
   - Never call methods that don't exist on the model. Flag any deviation from this pattern explicitly.
 
 ### Backend (Target)
+**Done in Phase 1:** `app.py` is thin; `backend/app_factory.py` (`create_app`, CORS, global error handlers with `errorCode`, static serving), `backend/config.py` (validated env; production fails fast on missing vars), `backend/errors.py` (shared `RecordNotFoundException`, `AppError`, `ValidationError`, `ConflictError`) and `backend/Services/order_service.py` (pure pricing, promo validation and status state machine, fully unit tested) exist. **Not done yet:** `payment_service`, `auth_service`, wiring `order_service` into the controllers (needs the new Orders columns and `Order_Status_History`), and the `Security/csrf.py` / `rate_limit.py` / `i18n/` modules.
 ```
 app.py                      # thin: from backend.app_factory import create_app; app = create_app()
 backend/
@@ -444,7 +446,7 @@ Setup: `docs/sql/schema.sql` (baseline) → `docs/sql/migrations/NNN_*.sql` (ide
 ## Roadmap (tick as implemented)
 - [x] Phase 0: Remove the Hotels leftovers, fix the ODBC driver env var, restrict CORS, re-enable auth on orders, return proper HTTP codes. (Scope: order, order_product and order_product_ingredient controllers; catalog/user/category controllers still have `#@require_auth` commented out and per-line ownership checks come with the Phase 1 services.)
 - [x] Database: migrations 001–007, the 4-category seed and `scripts/migrate.py`.
-- [ ] Phase 1: `app_factory`, `config`, `Services/` layer, update the models and controllers for the new columns, pytest + Ruff.
+- [ ] Phase 1: `app_factory`, `config`, `Services/` layer, update the models and controllers for the new columns, pytest + Ruff. (Done: app_factory, config, errors, order_service, pytest + Ruff + CI step. **Remaining:** model/controller column updates and wiring the service into controllers, blocked until migrations 001-007 are committed to the repo.)
 - [ ] Phase 2: Vite + React + TS app, `tokens.css` (light + dark), design-system components, routing, i18n + theme scaffolding.
 - [ ] Phase 3: Customer screens (Landing, Menu, Product modal, Cart, Checkout without payment, Tracking, My Orders, Login, Sign up) plus the mobile layouts.
 - [ ] Phase 4: Stripe (PaymentIntents, webhook, refunds, promo codes).
