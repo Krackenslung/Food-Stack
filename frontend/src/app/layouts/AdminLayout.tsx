@@ -15,12 +15,22 @@ import type { AdminSidebarGroup } from '../../design-system'
 import { initialsOf } from '../../lib/auth'
 import type { Role } from '../../lib/auth'
 import { AppearanceControls } from '../components/AppearanceControls'
+import { useKitchenBoard } from '../../features/kitchen/KitchenPage'
 import { useAuth } from '../providers/AuthProvider'
 import './AdminLayout.css'
 
 /** Sidebar structure from Figma A1; Categories/Ingredients/Customers/Reports are UI-only for now. */
-function buildGroups(role: Role, t: (key: string) => string): AdminSidebarGroup[] {
-  const kitchen = { to: '/kitchen', label: t('admin.items.kitchen'), icon: Utensils }
+function buildGroups(
+  role: Role,
+  t: (key: string) => string,
+  kitchenCount: number,
+): AdminSidebarGroup[] {
+  const kitchen = {
+    to: '/kitchen',
+    label: t('admin.items.kitchen'),
+    icon: Utensils,
+    badge: kitchenCount,
+  }
 
   // Staff only work the kitchen board.
   if (role === 'staff') {
@@ -74,11 +84,13 @@ export function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const role: Role = user?.role ?? 'staff'
+  const { data: board } = useKitchenBoard()
+  const kitchenCount = board ? board.columns.received.length : 0
 
   return (
     <div className="fs-admin-shell">
       <AdminSidebar
-        groups={buildGroups(role, t)}
+        groups={buildGroups(role, t, kitchenCount)}
         comingSoonLabel={t('common.comingSoon')}
         user={{
           initials: initialsOf(user),

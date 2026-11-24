@@ -7,6 +7,10 @@ import type { Language } from '../lib/language'
 type Bilingual = Record<Language, string>
 
 export type MockIngredient = {
+  /** Product_Ingredients.Id: stable once created, even when rows are reordered or removed. */
+  id: number
+  /** Ingredients.Id (the shared ingredient list the admin picks from). */
+  ingredientId: number
   name: Bilingual
   extraPrice: string
   default: number
@@ -27,6 +31,16 @@ export type MockProduct = {
   description: Bilingual
   allowCustomization: boolean
   ingredients: MockIngredient[]
+  // ---- admin fields ----
+  sku: string
+  cost: string
+  /** null = stock is not tracked. */
+  stock: number | null
+  lowStockThreshold: number
+  publishStatus: 'active' | 'draft'
+  isAvailable: boolean
+  /** Soft delete (Status = 0): hidden everywhere, but past orders keep referencing it. */
+  deleted: boolean
 }
 
 export const MOCK_CATEGORIES = [
@@ -36,7 +50,9 @@ export const MOCK_CATEGORIES = [
   { id: 4, slug: 'beverages', name: { en: 'Beverages', es: 'Bebidas' } },
 ] as const
 
-const burgerIngredients: MockIngredient[] = [
+type IngredientSeed = Omit<MockIngredient, 'id' | 'ingredientId'>
+
+const burgerIngredients: IngredientSeed[] = [
   {
     name: { en: 'Angus beef patty', es: 'Carne Angus' },
     extraPrice: '2.50',
@@ -81,7 +97,7 @@ const burgerIngredients: MockIngredient[] = [
   },
 ]
 
-const burritoIngredients: MockIngredient[] = [
+const burritoIngredients: IngredientSeed[] = [
   {
     name: { en: 'Rice', es: 'Arroz' },
     extraPrice: '0.00',
@@ -119,7 +135,19 @@ const burritoIngredients: MockIngredient[] = [
   },
 ]
 
-type Seed = Omit<MockProduct, 'ingredients' | 'allowCustomization'> & {
+type Seed = Pick<
+  MockProduct,
+  | 'id'
+  | 'category'
+  | 'price'
+  | 'calories'
+  | 'prepTimeMin'
+  | 'prepTimeMax'
+  | 'image'
+  | 'featured'
+  | 'name'
+  | 'description'
+> & {
   custom?: 'burger' | 'burrito'
 }
 
@@ -389,12 +417,54 @@ const seeds: Seed[] = [
   },
 ]
 
-export const MOCK_PRODUCTS: MockProduct[] = seeds.map(({ custom, ...product }) => ({
-  ...product,
-  allowCustomization: Boolean(custom),
-  ingredients:
-    custom === 'burger' ? burgerIngredients : custom === 'burrito' ? burritoIngredients : [],
-}))
+/** Shared ingredient list (the admin picks from it when editing a product). */
+export const MOCK_INGREDIENTS: { id: number; name: Bilingual }[] = (() => {
+  const names = new Map<string, Bilingual>()
+  for (const ingredient of [
+    ...burgerIngredients,
+    ...burritoIngredients,
+    { name: { en: 'House sauce', es: 'Salsa de la casa' } },
+    { name: { en: 'Brioche bun', es: 'Pan brioche' } },
+    { name: { en: 'Extra dip', es: 'Dip extra' } },
+  ]) {
+    names.set(ingredient.name.en, ingredient.name)
+  }
+  return [...names.values()].map((name, index) => ({ id: index + 1, name }))
+})()
+
+const ingredientIdOf = (name: Bilingual) => MOCK_INGREDIENTS.find((i) => i.name.en === name.en)!.id
+
+const STOCK: Record<number, number | null> = { 1: 48, 2: 36, 5: 22, 6: 8, 9: 0, 13: 90, 14: 30 }
+const SKU_LETTER = { burgers: 'B', burritos: 'R', sides: 'S', beverages: 'D' } as const
+
+/** Fresh copy of the seed catalog (so the editable mock store never mutates the constants). */
+export function seedProducts(): MockProduct[] {
+  const counters: Record<string, number> = {}
+  return seeds.map(({ custom, ...product }) => {
+    const list =
+      custom === 'burger' ? burgerIngredients : custom === 'burrito' ? burritoIngredients : []
+    counters[product.category] = (counters[product.category] ?? 0) + 1
+    const cents = Math.round(Number(product.price) * 100)
+    return structuredClone({
+      ...product,
+      allowCustomization: Boolean(custom),
+      ingredients: list.map((ingredient, index) => ({
+        ...ingredient,
+        id: productIngredientId(product.id, index),
+        ingredientId: ingredientIdOf(ingredient.name),
+      })),
+      sku: `SKU-${SKU_LETTER[product.category]}${String(counters[product.category]).padStart(3, '0')}`,
+      cost: ((cents * 0.32) / 100).toFixed(2),
+      stock: product.id in STOCK ? STOCK[product.id] : 40,
+      lowStockThreshold: 10,
+      publishStatus: 'active' as const,
+      isAvailable: true,
+      deleted: false,
+    })
+  })
+}
+
+export const MOCK_PRODUCTS: MockProduct[] = seedProducts()
 
 /** Stable id per (product, ingredient slot): Product_Ingredients.Id in the real schema. */
 export function productIngredientId(productId: number, index: number): number {

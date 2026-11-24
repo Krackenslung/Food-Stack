@@ -4,7 +4,7 @@
  * source of truth for totals; the UI never computes them.
  */
 import type { CartLineInput, FulfillmentType, PromoResult, Quote } from '../lib/api/types'
-import { MOCK_PRODUCTS, productIngredientId } from './catalog'
+import { db } from './db'
 
 export const MOCK_FEES = {
   /** basis points: 800 = 8% */
@@ -43,18 +43,21 @@ export class MockValidationError extends Error {
 }
 
 function priceLine(item: CartLineInput) {
-  const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)
+  const product = db.products().find((p) => p.id === item.productId && !p.deleted)
   if (!product) throw new MockValidationError('Unknown product.', 'PRODUCT_NOT_FOUND')
+  const orderable =
+    product.isAvailable &&
+    product.publishStatus === 'active' &&
+    (product.stock === null || product.stock >= (item.quantity ?? 1))
+  if (!orderable)
+    throw new MockValidationError(`${product.name.en} is not available.`, 'PRODUCT_UNAVAILABLE')
   if (!Number.isInteger(item.quantity) || item.quantity < 1) {
     throw new MockValidationError('Quantity must be at least 1.', 'QUANTITY_INVALID')
   }
 
   let extrasCents = 0
   for (const choice of item.ingredients) {
-    const index = product.ingredients.findIndex(
-      (_, i) => productIngredientId(product.id, i) === choice.productIngredientId,
-    )
-    const rule = product.ingredients[index]
+    const rule = product.ingredients.find((i) => i.id === choice.productIngredientId)
     if (!rule) throw new MockValidationError('Unknown ingredient.', 'INGREDIENT_NOT_FOUND')
     if (choice.quantity < 0 || choice.quantity > rule.max) {
       throw new MockValidationError('Too many of an ingredient.', 'INGREDIENT_QUANTITY_EXCEEDS_MAX')

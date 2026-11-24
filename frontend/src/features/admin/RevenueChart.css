@@ -1,0 +1,103 @@
+.fs-chart {
+  display: flex;
+  gap: var(--space-12);
+  height: 280px;
+}
+
+.fs-chart__ticks {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 0 28px;
+  list-style: none;
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-400);
+  text-align: right;
+}
+
+.fs-chart__plot {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  background-image: linear-gradient(var(--color-border-default) 1px, transparent 1px);
+  background-size: 100% 25%;
+  background-position: 0 0;
+  background-repeat: repeat-y;
+  padding-bottom: 28px;
+  background-origin: content-box;
+}
+
+.fs-chart__bars {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fs-chart__bars li {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.fs-chart__bar {
+  width: 100%;
+  min-height: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--color-brand-100);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fs-chart__bar:hover,
+.fs-chart__bar:focus-visible {
+  background: var(--color-brand-200);
+}
+
+.fs-chart__bar--today,
+.fs-chart__bar--today:hover {
+  background: var(--color-brand-500);
+}
+
+.fs-chart__bars li > span {
+  position: absolute;
+  bottom: -26px;
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-400);
+  white-space: nowrap;
+}
+
+.fs-chart__tooltip {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-8) var(--space-12);
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-dark);
+  font: 600 12px/16px var(--font-sans);
+  pointer-events: none;
+}
+
+.fs-chart__tooltip span {
+  color: var(--color-ink-300);
+  font-weight: 400;
+}

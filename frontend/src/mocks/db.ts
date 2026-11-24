@@ -1,6 +1,8 @@
 /** In-browser "database" for the mock API. Persisted in localStorage so demos survive reloads. */
 import type { Role } from '../lib/auth'
-import type { CheckoutRequest, OrderStatus, QuoteLine } from '../lib/api/types'
+import type { CheckoutRequest, OrderHistoryEntry, OrderStatus, QuoteLine } from '../lib/api/types'
+import { seedProducts } from './catalog'
+import type { MockProduct } from './catalog'
 
 export type MockUser = {
   id: number
@@ -23,6 +25,14 @@ export type MockOrder = {
   /** Card orders: when the (mock) webhook confirmed payment. Null = still unpaid. */
   paidAt: number | null
   refunded: boolean
+  /** true = status advances on its own with time (customer demo); false = staff drive it. */
+  auto: boolean
+  /** Explicit history/status/statusSince, authoritative once ``auto`` is false. */
+  history: OrderHistoryEntry[]
+  statusSince: number
+  stockConsumed: boolean
+  /** Seeded kitchen data (not placed through checkout). */
+  demo?: boolean
   request: CheckoutRequest
   lines: QuoteLine[]
   quote: {
@@ -40,6 +50,7 @@ const KEYS = {
   users: 'foodstack-mock-users',
   orders: 'foodstack-mock-orders',
   session: 'foodstack-mock-session',
+  products: 'foodstack-mock-products',
 } as const
 
 // Same test accounts as scripts/seed_users.py.
@@ -100,6 +111,9 @@ export const db = {
 
   orders: (): MockOrder[] => read(KEYS.orders, [] as MockOrder[]),
   saveOrders: (orders: MockOrder[]) => write(KEYS.orders, orders),
+
+  products: (): MockProduct[] => read(KEYS.products, seedProducts()),
+  saveProducts: (products: MockProduct[]) => write(KEYS.products, products),
 
   sessionUserId: (): number | null => read<number | null>(KEYS.session, null),
   setSession: (userId: number | null) => write(KEYS.session, userId),

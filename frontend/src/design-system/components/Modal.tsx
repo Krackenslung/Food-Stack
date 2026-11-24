@@ -9,6 +9,8 @@ type ModalProps = {
   label: string
   children: ReactNode
   className?: string
+  /** "drawer" slides in from the right (order details); default is a centered dialog. */
+  variant?: 'dialog' | 'drawer'
 }
 
 const FOCUSABLE =
@@ -18,7 +20,7 @@ const FOCUSABLE =
  * Dialog over a dimmed overlay. Traps focus, closes on Esc or overlay click, restores focus to
  * the trigger and locks page scroll. Below 768px it renders as a bottom sheet (CSS only).
  */
-export function Modal({ onClose, label, children, className }: ModalProps) {
+export function Modal({ onClose, label, children, className, variant = 'dialog' }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
@@ -65,7 +67,9 @@ export function Modal({ onClose, label, children, className }: ModalProps) {
 
   return createPortal(
     <div
-      className="fs-modal__overlay"
+      className={['fs-modal__overlay', variant === 'drawer' && 'fs-modal__overlay--drawer']
+        .filter(Boolean)
+        .join(' ')}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose()
       }}
@@ -76,7 +80,9 @@ export function Modal({ onClose, label, children, className }: ModalProps) {
         aria-modal="true"
         aria-label={label}
         tabIndex={-1}
-        className={['fs-modal', className].filter(Boolean).join(' ')}
+        className={['fs-modal', variant === 'drawer' && 'fs-modal--drawer', className]
+          .filter(Boolean)
+          .join(' ')}
       >
         {children}
       </div>

@@ -175,3 +175,111 @@ export type SignupRequest = AuthRequest & {
   lastname: string
   phoneNumber: string
 }
+
+// ---- staff & admin ---------------------------------------------------------------------------
+
+export type KitchenStatus = 'received' | 'preparing' | 'ready' | 'completed'
+
+export type KitchenTicket = {
+  id: number
+  orderNumber: string
+  status: KitchenStatus
+  fulfillmentType: FulfillmentType
+  customerName: string
+  createdAt: string
+  /** When the order entered its current column (drives the ticket timer). */
+  statusSince: string
+  /** Target time from order to ready (max Prep_Time_Max of its items). */
+  targetMinutes: number
+  delayed: boolean
+  lines: OrderLine[]
+}
+
+export type KitchenBoard = {
+  columns: Record<KitchenStatus, KitchenTicket[]>
+  stats: { active: number; avgPrepSeconds: number; delayed: number }
+}
+
+export type AdminOrderRow = OrderSummary & {
+  customerName: string
+  fulfillmentType: FulfillmentType
+  paymentMethod: PaymentMethod
+}
+
+export type AdminOrdersPage = Paged<AdminOrderRow> & {
+  counts: Record<'all' | OrderStatus, number>
+}
+
+export type DashboardRange = '7d' | '30d' | '90d'
+
+export type Kpi = { value: string; deltaPct: number }
+
+export type Dashboard = {
+  range: DashboardRange
+  kpis: {
+    revenue: Kpi
+    orders: Kpi
+    avgTicket: Kpi
+    avgPrepSeconds: { value: number; deltaSeconds: number }
+  }
+  revenueTotal: string
+  revenueDeltaPct: number
+  series: { date: string; revenue: string; orders: number }[]
+  bestSellers: { productId: number; name: string; image: string; sold: number; revenue: string }[]
+  recentOrders: AdminOrderRow[]
+  ordersInKitchen: number
+}
+
+export type AdminProductRow = {
+  id: number
+  sku: string
+  name: string
+  image: string
+  category: Category
+  price: string
+  stock: number | null
+  lowStockThreshold: number
+  publishStatus: 'active' | 'draft'
+  isAvailable: boolean
+  ingredientCount: number
+}
+
+export type AdminProductsPage = Paged<AdminProductRow> & {
+  stats: { active: number; lowStock: number; outOfStock: number; drafts: number }
+  categoryCounts: Record<string, number>
+}
+
+export type AdminProductIngredient = {
+  /** Product_Ingredients.Id; absent for rows added in the editor. */
+  id?: number
+  ingredientId: number
+  name: string
+  default: number
+  max: number
+  extraPrice: string
+  removable: boolean
+}
+
+export type ProductTranslations = Record<'en' | 'es', { name: string; description: string }>
+
+export type AdminProductInput = {
+  categoryId: number
+  price: string
+  cost: string
+  /** null = stock is not tracked. */
+  stock: number | null
+  lowStockThreshold: number
+  prepTimeMin: number
+  prepTimeMax: number
+  calories: number | null
+  isAvailable: boolean
+  isFeatured: boolean
+  allowCustomization: boolean
+  publishStatus: 'active' | 'draft'
+  translations: ProductTranslations
+  ingredients: AdminProductIngredient[]
+}
+
+export type AdminProduct = AdminProductInput & { id: number; sku: string; image: string }
+
+export type AdminIngredient = { id: number; name: string }

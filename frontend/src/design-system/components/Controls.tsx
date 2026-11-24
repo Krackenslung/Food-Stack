@@ -1,5 +1,10 @@
 import { forwardRef, useId } from 'react'
-import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react'
 import type { LucideIcon } from '../icons'
 import { Check } from '../icons'
 import './Controls.css'
@@ -127,6 +132,55 @@ export function RadioCard({
     </label>
   )
 }
+
+/* ---- Toggle (switch) ------------------------------------------------------------------- */
+
+type ToggleProps = {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  /** Accessible name; pass a translated string. */
+  label: string
+  disabled?: boolean
+}
+
+export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      className="fs-toggle"
+      onClick={() => onChange(!checked)}
+    >
+      <span aria-hidden="true" />
+    </button>
+  )
+}
+
+/* ---- Select ---------------------------------------------------------------------------- */
+
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string }
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
+  { label, error, id, className, children, ...rest },
+  ref,
+) {
+  const generated = useId()
+  const selectId = id ?? generated
+  return (
+    <div
+      className={['fs-select', error && 'fs-select--error', className].filter(Boolean).join(' ')}
+    >
+      <label htmlFor={selectId}>{label}</label>
+      <select ref={ref} id={selectId} aria-invalid={error ? true : undefined} {...rest}>
+        {children}
+      </select>
+      {error && <p role="alert">{error}</p>}
+    </div>
+  )
+})
 
 /* ---- Feedback -------------------------------------------------------------------------- */
 

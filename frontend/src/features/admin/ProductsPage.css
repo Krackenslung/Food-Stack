@@ -1,0 +1,203 @@
+.fs-products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.fs-products__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-products__head h1 {
+  margin: 0 0 var(--space-4);
+  letter-spacing: -1px;
+}
+
+.fs-products__head p {
+  margin: 0;
+  color: var(--color-ink-500);
+}
+
+.fs-products__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-16);
+}
+
+.fs-products__stat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-16) 20px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.fs-products__stat > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.fs-products__stat span {
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  color: var(--color-ink-500);
+}
+
+.fs-products__stat strong {
+  font: 700 22px/30px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-products__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+}
+
+.fs-products__tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.fs-products__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.fs-products__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 240px;
+  height: 42px;
+  padding-inline: 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-400);
+}
+
+.fs-products__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink-900);
+  font: 400 14px/20px var(--font-sans);
+}
+
+.fs-products__empty {
+  margin: 0;
+  padding: var(--space-48);
+  text-align: center;
+  color: var(--color-ink-500);
+}
+
+.fs-products__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.fs-products__name img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.fs-products__name a {
+  font: 600 14px/20px var(--font-sans) !important;
+  color: var(--color-ink-900);
+}
+
+.fs-products__name small {
+  display: block;
+  font: 400 12px/16px var(--font-sans);
+  color: var(--color-ink-400);
+}
+
+.fs-products__stock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 110px;
+  font: 600 12px/16px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-products__stock div {
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+}
+
+.fs-products__stock i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+}
+
+.fs-products__stock[data-state='low'] span {
+  color: var(--color-warning);
+}
+
+.fs-products__stock[data-state='low'] i {
+  background: var(--color-warning);
+}
+
+.fs-products__stock[data-state='out'] span {
+  color: var(--color-danger);
+}
+
+.fs-products__edit {
+  display: inline-flex;
+  padding: var(--space-8);
+  color: var(--color-ink-500);
+}
+
+.fs-products__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  font: 400 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-products__foot nav {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.fs-products__foot button {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-card);
+  color: var(--color-ink-700);
+  font: 600 14px/20px var(--font-sans);
+  cursor: pointer;
+}
+
+.fs-products__foot button[aria-current='page'] {
+  background: var(--color-surface-dark);
+  border-color: var(--color-surface-dark);
+  color: var(--color-on-dark);
+}

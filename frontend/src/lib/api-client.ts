@@ -24,6 +24,8 @@ type Envelope<T> = { status: number; data?: T; errorMessage?: string; errorCode?
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
+  /** Multipart upload; the browser sets the boundary, so no Content-Type here. */
+  form?: FormData
   /** Set false to skip the Authorization header. */
   auth?: boolean
   signal?: AbortSignal
@@ -65,7 +67,7 @@ function isEnvelope(payload: unknown): payload is Envelope<unknown> {
 }
 
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true, signal } = options
+  const { method = 'GET', body, form, auth = true, signal } = options
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
@@ -78,7 +80,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
       method,
       headers,
       credentials: 'same-origin',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: form ?? (body === undefined ? undefined : JSON.stringify(body)),
       signal,
     })
   } catch (error) {

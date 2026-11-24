@@ -3,9 +3,7 @@ import type {
   CheckoutRequest,
   MenuProduct,
   OrderDetail,
-  OrderHistoryEntry,
   OrderStatus,
-  OrderSummary,
   ProductDetail,
   QuoteRequest,
   SignupRequest,
@@ -13,12 +11,23 @@ import type {
 } from '../lib/api/types'
 import { normalizeLanguage } from '../lib/language'
 import type { Language } from '../lib/language'
-import { MOCK_CATEGORIES, MOCK_PRODUCTS, productIngredientId } from './catalog'
+import { adminHandlers } from './adminHandlers'
+import { MOCK_CATEGORIES } from './catalog'
 import type { MockProduct } from './catalog'
 import { db } from './db'
 import type { MockOrder, MockUser } from './db'
 import { parseMockCredential } from './credential'
 import { MockValidationError, quoteCart } from './pricing'
+import {
+  applyTransition,
+  baseSummary,
+  consumeStock,
+  historyOf,
+  MockOrderError,
+  productOf,
+  statusOf,
+  toSummary,
+} from './orders'
 
 // Matches both the dev proxy ("/api/...") and an absolute VITE_API_BASE_URL.
 const route = (path: string) => `*/api${path}`
@@ -98,11 +107,14 @@ function toMenuProduct(product: MockProduct, lang: Language): MenuProduct {
     calories: product.calories,
     prepTimeMin: product.prepTimeMin,
     prepTimeMax: product.prepTimeMax,
-    isAvailable: true,
-    stock: null,
+    isAvailable: orderable(product),
+    stock: product.stock,
     isFeatured: product.featured,
   }
 }
+
+const orderable = (p: MockProduct) =>
+  !p.deleted && p.isAvailable && p.publishStatus === 'active' && (p.stock === null || p.stock > 0)
 
 function toProductDetail(product: MockProduct, lang: Language): ProductDetail {
   const category = MOCK_CATEGORIES.find((c) => c.slug === product.category)!
@@ -110,8 +122,8 @@ function toProductDetail(product: MockProduct, lang: Language): ProductDetail {
     ...toMenuProduct(product, lang),
     category: { id: category.id, slug: category.slug, name: category.name[lang] },
     allowCustomization: product.allowCustomization,
-    ingredients: product.ingredients.map((ingredient, index) => ({
-      productIngredientId: productIngredientId(product.id, index),
+    ingredients: product.ingredients.map((ingredient) => ({
+      productIngredientId: ingredient.id,
       name: ingredient.name[lang],
       extraPrice: ingredient.extraPrice,
       default: ingredient.default,
@@ -122,79 +134,6 @@ function toProductDetail(product: MockProduct, lang: Language): ProductDetail {
 }
 
 // ---- orders ----------------------------------------------------------------
-
-const RECEIVED_FOR_MS = 20_000
-const PREPARING_FOR_MS = 60_000
-
-const isCard = (order: MockOrder) => order.request.paymentMethod === 'card'
-
-/** Demo progression: received -> preparing after 20s -> ready after 60s (counted from payment). */
-function statusOf(order: MockOrder, now = Date.now()): OrderStatus {
-  if (order.status === 'cancelled' || order.status === 'completed') return order.status
-  if (isCard(order) && order.paidAt === null) return 'pending_payment'
-  const age = now - (order.paidAt ?? order.createdAt)
-  if (age < RECEIVED_FOR_MS) return 'received'
-  if (age < PREPARING_FOR_MS) return 'preparing'
-  return 'ready'
-}
-
-function historyOf(order: MockOrder, now = Date.now()): OrderHistoryEntry[] {
-  const iso = (ms: number) => new Date(ms).toISOString()
-  const entries: OrderHistoryEntry[] = []
-  let from: OrderStatus | null = null
-  const push = (to: OrderStatus, at: number) => {
-    entries.push({ fromStatus: from, toStatus: to, createdAt: iso(at) })
-    from = to
-  }
-
-  if (isCard(order)) push('pending_payment', order.createdAt)
-  const receivedAt = order.paidAt ?? order.createdAt
-  if (!isCard(order) || order.paidAt !== null) push('received', receivedAt)
-
-  if (order.status === 'cancelled') {
-    push('cancelled', order.cancelledAt ?? now)
-    return entries
-  }
-  const age = now - receivedAt
-  if (entries.length > 0 && from === 'received' && age >= RECEIVED_FOR_MS) {
-    push('preparing', receivedAt + RECEIVED_FOR_MS)
-  }
-  if (from === 'preparing' && age >= PREPARING_FOR_MS) push('ready', receivedAt + PREPARING_FOR_MS)
-  return entries
-}
-
-function productOf(id: number): MockProduct {
-  return MOCK_PRODUCTS.find((p) => p.id === id)!
-}
-
-function baseSummary(order: MockOrder): Omit<OrderSummary, 'items'> {
-  return {
-    id: order.id,
-    orderNumber: `FS-${1000 + order.id}`,
-    status: statusOf(order),
-    paymentStatus: !isCard(order)
-      ? 'pay_at_counter'
-      : order.refunded
-        ? 'refunded'
-        : order.paidAt === null
-          ? 'unpaid'
-          : 'paid',
-    total: order.quote.total,
-    createdAt: new Date(order.createdAt).toISOString(),
-    itemCount: order.lines.reduce((sum, line) => sum + line.quantity, 0),
-  }
-}
-
-function toSummary(order: MockOrder, lang: Language): OrderSummary {
-  return {
-    ...baseSummary(order),
-    items: order.lines.map((line) => ({
-      name: productOf(line.productId).name[lang],
-      image: productOf(line.productId).image,
-      quantity: line.quantity,
-    })),
-  }
-}
 
 function toDetail(order: MockOrder, lang: Language): OrderDetail {
   const status = statusOf(order)
@@ -228,14 +167,13 @@ function toDetail(order: MockOrder, lang: Language): OrderDetail {
         unitPrice: line.unitPrice,
         lineTotal: line.lineTotal,
         notes: input?.notes ?? '',
-        ingredients: product.ingredients.map((rule, i) => ({
-          productIngredientId: productIngredientId(product.id, i),
+        ingredients: product.ingredients.map((rule) => ({
+          productIngredientId: rule.id,
           name: rule.name[lang],
           default: rule.default,
           quantity:
-            input?.ingredients.find(
-              (choice) => choice.productIngredientId === productIngredientId(product.id, i),
-            )?.quantity ?? rule.default,
+            input?.ingredients.find((choice) => choice.productIngredientId === rule.id)?.quantity ??
+            rule.default,
         })),
       }
     }),
@@ -256,7 +194,7 @@ function validationFailure(error: unknown) {
 
 // ---- handlers --------------------------------------------------------------
 
-export const handlers = [
+const coreHandlers = [
   http.get(route('/test'), () => ok({ message: 'mock api' })),
 
   http.get(route('/store'), () => ok(storeInfo())),
@@ -266,15 +204,16 @@ export const handlers = [
     return ok(
       MOCK_CATEGORIES.map((category) => ({
         category: { id: category.id, slug: category.slug, name: category.name[lang] },
-        products: MOCK_PRODUCTS.filter((p) => p.category === category.slug).map((p) =>
-          toMenuProduct(p, lang),
-        ),
+        products: db
+          .products()
+          .filter((p) => p.category === category.slug && orderable(p))
+          .map((p) => toMenuProduct(p, lang)),
       })),
     )
   }),
 
   http.get(route('/products/:id'), ({ params, request }) => {
-    const product = MOCK_PRODUCTS.find((p) => p.id === Number(params.id))
+    const product = db.products().find((p) => p.id === Number(params.id) && !p.deleted)
     if (!product) return fail('Product not found.', 'RECORD_NOT_FOUND', 404)
     return ok(toProductDetail(product, langOf(new URL(request.url))))
   }),
@@ -429,6 +368,10 @@ export const handlers = [
         cancelledAt: null,
         paidAt: null,
         refunded: false,
+        auto: true,
+        history: [],
+        statusSince: Date.now(),
+        stockConsumed: false,
         request: body,
         lines: quote.lines,
         quote: {
@@ -441,6 +384,7 @@ export const handlers = [
         },
         promoCode: quote.promo?.valid ? quote.promo.code : null,
       }
+      if (body.paymentMethod === 'counter') consumeStock(order, 1)
       db.saveOrders([...orders, order])
       return ok(
         {
@@ -470,6 +414,7 @@ export const handlers = [
     }
     if (order.paidAt === null) {
       order.paidAt = Date.now()
+      consumeStock(order, 1)
       db.saveOrders(orders)
     }
     return ok({ status: 'paid' })
@@ -524,13 +469,13 @@ export const handlers = [
     if (order.userId !== user.id && user.role === 'customer') {
       return fail('Forbidden', 'FORBIDDEN', 403)
     }
-    // Customers can only cancel before the kitchen accepts (while "received").
-    if (statusOf(order) !== 'received') {
-      return fail('This order can no longer be cancelled.', 'ORDER_CANCEL_NOT_ALLOWED', 403)
+    try {
+      applyTransition(order, 'cancelled', user.role)
+    } catch (error) {
+      if (error instanceof MockOrderError)
+        return fail(error.message, error.errorCode, error.httpStatus)
+      throw error
     }
-    order.status = 'cancelled'
-    order.cancelledAt = Date.now()
-    if (isCard(order) && order.paidAt !== null) order.refunded = true
     db.saveOrders(orders)
     return ok({ status: 'cancelled' })
   }),
@@ -545,3 +490,5 @@ function publicUser(user: MockUser) {
     role: user.role,
   }
 }
+
+export const handlers = [...coreHandlers, ...adminHandlers]

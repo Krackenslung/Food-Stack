@@ -1,0 +1,212 @@
+.fs-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.fs-editor__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-editor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.fs-editor__head h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.fs-editor__head > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.fs-editor__preview {
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-brand-600);
+}
+
+.fs-editor__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-editor__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-24);
+  align-items: start;
+}
+
+.fs-editor__main,
+.fs-editor__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.fs-editor__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-24);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+}
+
+.fs-editor__card h2 {
+  margin: 0;
+  color: var(--color-ink-900);
+}
+
+.fs-editor__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.fs-editor__card-head p,
+.fs-editor__sub {
+  margin: var(--space-4) 0 0;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-editor__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-16);
+}
+
+.fs-editor__row--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fs-editor__prep {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+
+.fs-editor__counter,
+.fs-editor__hint {
+  margin: var(--space-4) 0 0;
+  font: 400 12px/16px var(--font-sans);
+  color: var(--color-ink-400);
+}
+
+.fs-editor__counter {
+  text-align: right;
+}
+
+.fs-editor__counter--over {
+  color: var(--color-danger);
+}
+
+.fs-editor__ingredients input {
+  width: 72px;
+  height: 36px;
+  padding-inline: var(--space-8);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-900);
+  font: 400 14px/20px var(--font-sans);
+}
+
+.fs-editor__trash {
+  display: inline-flex;
+  padding: var(--space-8);
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-500);
+  cursor: pointer;
+}
+
+.fs-editor__add {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-12);
+}
+
+.fs-editor__add .fs-select {
+  flex: 1;
+}
+
+.fs-editor__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+
+.fs-editor__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-24);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-ink-500);
+  text-align: center;
+  font: 600 14px/20px var(--font-sans);
+  cursor: pointer;
+}
+
+.fs-editor__drop:focus-within {
+  border-color: var(--color-brand-500);
+}
+
+.fs-editor__drop small {
+  font: 400 12px/16px var(--font-sans);
+}
+
+.fs-editor__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.fs-editor__switch div {
+  display: flex;
+  flex-direction: column;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-editor__switch small {
+  font: 400 12px/16px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+@media (width <= 1100px) {
+  .fs-editor__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fs-editor__row--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

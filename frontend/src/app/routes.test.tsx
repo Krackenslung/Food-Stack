@@ -58,7 +58,9 @@ describe('routing and guards', () => {
   it('shows the full admin sidebar with "coming soon" items', async () => {
     signInAs('admin')
     renderApp('/admin')
-    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /good (morning|afternoon|evening)/i, level: 1 }),
+    ).toBeInTheDocument()
     expect(screen.getAllByText('Coming soon')).toHaveLength(4)
   })
 })

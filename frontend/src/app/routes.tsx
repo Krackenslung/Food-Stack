@@ -8,14 +8,16 @@ import { ProductModal } from '../features/menu/ProductModal'
 import { MyOrdersPage } from '../features/orders/MyOrdersPage'
 import { OrderTrackingPage } from '../features/orders/OrderTrackingPage'
 import { SignupPage } from '../features/auth/SignupPage'
+import { AdminOrdersPage } from '../features/admin/AdminOrdersPage'
+import { DashboardPage } from '../features/admin/DashboardPage'
+import { ProductEditorPage } from '../features/admin/ProductEditorPage'
+import { ProductsPage } from '../features/admin/ProductsPage'
+import { KitchenPage } from '../features/kitchen/KitchenPage'
 import { AdminLayout } from './layouts/AdminLayout'
 import { CustomerLayout } from './layouts/CustomerLayout'
 import { DesignSystemPreview } from './pages/DesignSystemPreview'
 import { NotFound } from './pages/NotFound'
-import { ScreenPlaceholder } from './pages/ScreenPlaceholder'
 import { RequireRole } from './RequireRole'
-
-const screen = (titleKey: string) => <ScreenPlaceholder titleKey={titleKey} />
 
 /** Screen -> route map from CLAUDE.md. Customer screens are real (Phase 3); staff/admin are Phase 6. */
 export const routes: RouteObject[] = [
@@ -55,15 +57,15 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <RequireRole roles={['staff', 'admin']} />,
-        children: [{ path: '/kitchen', element: screen('pages.kitchen') }],
+        children: [{ path: '/kitchen', element: <KitchenPage /> }],
       },
       {
         element: <RequireRole roles={['admin']} />,
         children: [
-          { path: '/admin', element: screen('pages.adminDashboard') },
-          { path: '/admin/products', element: screen('pages.adminProducts') },
-          { path: '/admin/products/:id', element: screen('pages.productEditor') }, // "new" creates
-          { path: '/admin/orders', element: screen('pages.adminOrders') },
+          { path: '/admin', element: <DashboardPage /> },
+          { path: '/admin/products', element: <ProductsPage /> },
+          { path: '/admin/products/:id', element: <ProductEditorPage /> }, // "new" creates
+          { path: '/admin/orders', element: <AdminOrdersPage /> },
         ],
       },
     ],
