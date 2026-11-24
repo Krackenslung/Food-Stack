@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from backend.config import Config
 from backend.Infrastructure.google_oauth import GoogleTokenVerifier
 from backend.Infrastructure.stripe_client import StripeGateway
+from backend.Services.account_service import AccountService
 from backend.Services.admin_service import AdminService
 from backend.Services.auth_service import AuthService
 from backend.Services.checkout_service import CheckoutService
@@ -14,6 +15,7 @@ from backend.Services.ports import (
     PaymentGateway,
     UserRepository,
 )
+from backend.Services.public_service import PublicService
 
 
 @dataclass
@@ -25,6 +27,8 @@ class Services:
     payments: PaymentService | None = None
     auth: AuthService | None = None
     admin: AdminService | None = None
+    public: PublicService | None = None
+    account: AccountService | None = None
 
 
 def build_services(
@@ -51,16 +55,17 @@ def build_services(
 def build_sql_services(config: Config) -> Services:
     """Wire the services over the SQL repositories (used by app.py when the database is set up)."""
     from backend.Infrastructure.blob_storage import BlobStorage
-    from backend.Infrastructure.sql_admin import SqlAdminRepository
+    from backend.Infrastructure.sql_public import SqlPublicRepository
     from backend.Infrastructure.sql_repositories import (
+        SqlAccountRepository,
         SqlCatalogRepository,
         SqlOrderRepository,
-        SqlUserRepository,
     )
 
     orders = SqlOrderRepository()
-    services = build_services(config, SqlCatalogRepository(), orders, users=SqlUserRepository())
-    services.admin = AdminService(
-        SqlAdminRepository(), orders, services.payments, BlobStorage.from_env()
-    )
+    services = build_services(config, SqlCatalogRepository(), orders, users=SqlAccountRepository())
+    repo = SqlPublicRepository()
+    services.admin = AdminService(repo, orders, services.payments, BlobStorage.from_env())
+    services.public = PublicService(repo, config, payments_enabled=services.payments is not None)
+    services.account = AccountService(SqlAccountRepository())
     return services

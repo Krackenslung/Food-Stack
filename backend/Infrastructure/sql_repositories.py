@@ -509,3 +509,63 @@ class SqlUserRepository(_Base):
             cur.execute(
                 "UPDATE dbo.Users SET last_login_at = SYSUTCDATETIME() WHERE id = ?", user_id
             )
+
+
+# ---- account (password sign-in and profile) ------------------------------------------------
+
+PROFILE_COLUMNS = (
+    "id, name, lastname, email, role, status, preferred_language, preferred_theme, password_hash"
+)
+
+
+def _profile(row) -> dict:
+    return {
+        "id": row.id,
+        "name": row.name,
+        "lastname": row.lastname,
+        "email": row.email,
+        "role": row.role,
+        "status": int(row.status),
+        "preferred_language": row.preferred_language,
+        "preferred_theme": row.preferred_theme,
+        "password_hash": row.password_hash,
+    }
+
+
+class SqlAccountRepository(SqlUserRepository):
+    def find_credentials(self, email: str) -> dict | None:
+        rows = self._query(
+            f"SELECT {PROFILE_COLUMNS} FROM dbo.Users WHERE LOWER(email) = LOWER(?)", email
+        )
+        return _profile(rows[0]) if rows else None
+
+    def get_profile(self, user_id: int) -> dict | None:
+        rows = self._query(f"SELECT {PROFILE_COLUMNS} FROM dbo.Users WHERE id = ?", user_id)
+        return _profile(rows[0]) if rows else None
+
+    def create_password_user(
+        self, *, name: str, lastname: str, phone: str | None, email: str, password_hash: str
+    ) -> int:
+        with self._tx() as cur:
+            return cur.execute(
+                "INSERT INTO dbo.Users (name, lastname, phone_number, email, password_hash, role, "
+                "auth_provider, status) OUTPUT INSERTED.id VALUES (?,?,?,?,?,'customer','password',1)",
+                name,
+                lastname,
+                phone,
+                email,
+                password_hash,
+            ).fetchone()[0]
+
+    def update_profile(self, user_id: int, changes: dict) -> None:
+        allowed = {"name", "phone_number", "preferred_language", "preferred_theme"}
+        columns = [c for c in changes if c in allowed]
+        if not columns:
+            return
+        sets = ", ".join(f"{c} = ?" for c in columns)
+        with self._tx() as cur:
+            cur.execute(
+                f"UPDATE dbo.Users SET {sets} WHERE id = ?",
+                *[changes[c] for c in columns],
+                user_id,
+            )

@@ -47,9 +47,11 @@ def register_blueprints(app):
     from backend.Controllers.payment_controller import payment_bp
     from backend.Controllers.product_controller import product_bp
     from backend.Controllers.product_ingredient_controller import product_ingredient_bp
+    from backend.Controllers.public_controller import public_bp
     from backend.Controllers.user_controller import user_bp
 
     for blueprint in (
+        public_bp,  # first: its paths win over the legacy ones when the SQL services are on
         user_bp,
         category_bp,
         product_bp,
