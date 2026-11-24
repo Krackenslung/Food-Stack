@@ -57,6 +57,7 @@ class Config:
     store_hours: str
     stripe_secret_key: str
     stripe_webhook_secret: str
+    google_client_id: str
 
     @property
     def is_production(self):
@@ -111,4 +112,5 @@ def load_config(env=None):
         store_hours=store_hours,
         stripe_secret_key=_text(env, "STRIPE_SECRET_KEY"),
         stripe_webhook_secret=_text(env, "STRIPE_WEBHOOK_SECRET"),
+        google_client_id=_text(env, "GOOGLE_CLIENT_ID"),
     )

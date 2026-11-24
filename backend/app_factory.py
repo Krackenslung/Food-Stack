@@ -35,6 +35,7 @@ def _error_response(message, http_status, error_code):
 
 def register_blueprints(app):
     # Imported lazily so create_app() controls when env/config is read.
+    from backend.Controllers.auth_controller import auth_bp
     from backend.Controllers.category_controller import category_bp
     from backend.Controllers.ingredient_controller import ingredient_bp
     from backend.Controllers.order_controller import order_bp
@@ -57,6 +58,7 @@ def register_blueprints(app):
         order_product_bp,
         order_product_ingredient_bp,
         payment_bp,
+        auth_bp,
     ):
         app.register_blueprint(blueprint, url_prefix="/api")
 

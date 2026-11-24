@@ -161,3 +161,41 @@ class OrderRepository(Protocol):
         ...
 
     def total_refunded(self, order_id: int) -> Decimal: ...
+
+
+@dataclass
+class UserRecord:
+    id: int
+    name: str
+    lastname: str
+    email: str
+    role: str
+    status: int = 1  # 1 = alive, 0 = soft-deleted
+    google_sub: str | None = None
+    auth_provider: str = "password"
+
+
+class GoogleVerifier(Protocol):
+    def verify(self, id_token: str) -> dict:
+        """Return the verified claims of a Google ID token or raise AppError (401)."""
+        ...
+
+
+class UserRepository(Protocol):
+    def find_by_google_sub(self, google_sub: str) -> UserRecord | None: ...
+
+    def find_by_email(self, email: str) -> UserRecord | None: ...
+
+    def create_google_user(
+        self, *, email: str, name: str, lastname: str, google_sub: str, avatar_url: str | None
+    ) -> UserRecord:
+        """Insert a customer with auth_provider=google and no password."""
+        ...
+
+    def link_google(
+        self, user_id: int, *, google_sub: str, avatar_url: str | None
+    ) -> UserRecord: ...
+
+    def touch_login(self, user_id: int) -> None:
+        """Set last_login_at."""
+        ...
