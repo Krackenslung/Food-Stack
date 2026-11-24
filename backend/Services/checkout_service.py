@@ -125,6 +125,7 @@ class CheckoutService:
                 raise ValidationError("Unknown ingredient.", error_code="INGREDIENT_NOT_FOUND")
             choices.append(
                 {
+                    "product_ingredient_id": rule.product_ingredient_id,
                     "quantity": choice.get("quantity"),
                     "default": rule.default,
                     "max": rule.max,
