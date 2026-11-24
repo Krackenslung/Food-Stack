@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from backend.config import Config
 from backend.Infrastructure.google_oauth import GoogleTokenVerifier
 from backend.Infrastructure.stripe_client import StripeGateway
+from backend.Services.admin_service import AdminService
 from backend.Services.auth_service import AuthService
 from backend.Services.checkout_service import CheckoutService
 from backend.Services.payment_service import PaymentService
@@ -23,6 +24,7 @@ class Services:
     checkout: CheckoutService | None = None
     payments: PaymentService | None = None
     auth: AuthService | None = None
+    admin: AdminService | None = None
 
 
 def build_services(
@@ -44,3 +46,21 @@ def build_services(
     return Services(
         checkout=CheckoutService(config, catalog, orders, payments), payments=payments, auth=auth
     )
+
+
+def build_sql_services(config: Config) -> Services:
+    """Wire the services over the SQL repositories (used by app.py when the database is set up)."""
+    from backend.Infrastructure.blob_storage import BlobStorage
+    from backend.Infrastructure.sql_admin import SqlAdminRepository
+    from backend.Infrastructure.sql_repositories import (
+        SqlCatalogRepository,
+        SqlOrderRepository,
+        SqlUserRepository,
+    )
+
+    orders = SqlOrderRepository()
+    services = build_services(config, SqlCatalogRepository(), orders, users=SqlUserRepository())
+    services.admin = AdminService(
+        SqlAdminRepository(), orders, services.payments, BlobStorage.from_env()
+    )
+    return services
