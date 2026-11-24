@@ -113,3 +113,14 @@ STAFF_ROLES = ("staff", "admin")
 def is_staff_request():
     """True when the authenticated caller is staff or admin (call after @require_auth)."""
     return str(getattr(request, "user_role", "") or "").lower() in STAFF_ROLES
+
+
+def get_optional_user_id():
+    """User id from a valid token, or None. Never rejects the request (public endpoints)."""
+    token = _read_auth_token()
+    if not token:
+        return None
+    try:
+        return int(decode_token(token).get("user_id") or 0) or None
+    except (InvalidTokenError, ExpiredSignatureError, ValueError):
+        return None

@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 
 from backend.config import Config, load_config
 from backend.errors import AppError, RecordNotFoundException
+from backend.Services.container import Services
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -41,6 +42,7 @@ def register_blueprints(app):
     from backend.Controllers.order_product_ingredient_controller import (
         order_product_ingredient_bp,
     )
+    from backend.Controllers.payment_controller import payment_bp
     from backend.Controllers.product_controller import product_bp
     from backend.Controllers.product_ingredient_controller import product_ingredient_bp
     from backend.Controllers.user_controller import user_bp
@@ -54,6 +56,7 @@ def register_blueprints(app):
         product_ingredient_bp,
         order_product_bp,
         order_product_ingredient_bp,
+        payment_bp,
     ):
         app.register_blueprint(blueprint, url_prefix="/api")
 
@@ -118,12 +121,17 @@ def register_frontend(app, frontend_dir):
         return send_from_directory(frontend_dir, "login.html")
 
 
-def create_app(config: Config | None = None, frontend_dir: Path | None = None):
+def create_app(
+    config: Config | None = None,
+    frontend_dir: Path | None = None,
+    services: Services | None = None,
+):
     config = config or load_config()
 
     app = Flask(__name__)
     app.secret_key = config.flask_secret_key
     app.config["FOODSTACK"] = config
+    app.extensions["foodstack_services"] = services or Services()
 
     register_blueprints(app)
     register_cors(app, config)

@@ -6,6 +6,8 @@ from decimal import Decimal, InvalidOperation
 
 from dotenv import load_dotenv
 
+from backend.store_hours import HoursError, parse_hours
+
 load_dotenv()
 
 REQUIRED_IN_PRODUCTION = (
@@ -53,10 +55,17 @@ class Config:
     store_address: str
     store_timezone: str
     store_hours: str
+    stripe_secret_key: str
+    stripe_webhook_secret: str
 
     @property
     def is_production(self):
         return self.app_env == "production"
+
+    @property
+    def payments_enabled(self):
+        """Card payments need both keys: without the webhook secret nothing could ever confirm."""
+        return bool(self.stripe_secret_key and self.stripe_webhook_secret)
 
 
 def load_config(env=None):
@@ -74,9 +83,19 @@ def load_config(env=None):
                 "Missing required environment variable(s) for production: " + ", ".join(missing)
             )
 
+    if _text(env, "STRIPE_SECRET_KEY") and not _text(env, "STRIPE_WEBHOOK_SECRET"):
+        raise ConfigError("STRIPE_WEBHOOK_SECRET is required when STRIPE_SECRET_KEY is set.")
+
     tax_rate = _decimal(env, "TAX_RATE", "0.08")
     if tax_rate > 1:
         raise ConfigError("TAX_RATE is a fraction (0.08 = 8%), got a value above 1.")
+
+    store_hours = _text(env, "STORE_HOURS", "mon-sun 11:00-23:00")
+    store_timezone = _text(env, "STORE_TIMEZONE", "America/Tijuana")
+    try:
+        parse_hours(store_hours, store_timezone)
+    except HoursError as exc:
+        raise ConfigError(str(exc)) from exc
 
     return Config(
         app_env=app_env,
@@ -88,6 +107,8 @@ def load_config(env=None):
         currency=_text(env, "CURRENCY", _text(env, "STRIPE_CURRENCY", "usd")).upper(),
         store_name=_text(env, "STORE_NAME", "FoodStack"),
         store_address=_text(env, "STORE_ADDRESS"),
-        store_timezone=_text(env, "STORE_TIMEZONE", "America/Tijuana"),
-        store_hours=_text(env, "STORE_HOURS", "mon-sun 11:00-23:00"),
+        store_timezone=store_timezone,
+        store_hours=store_hours,
+        stripe_secret_key=_text(env, "STRIPE_SECRET_KEY"),
+        stripe_webhook_secret=_text(env, "STRIPE_WEBHOOK_SECRET"),
     )
