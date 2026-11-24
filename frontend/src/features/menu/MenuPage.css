@@ -11,7 +11,7 @@
   gap: 6px;
   font: 600 12px/16px var(--font-sans);
   letter-spacing: 0.2px;
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-menu__crumbs [aria-current='page'] {
@@ -121,7 +121,7 @@
 }
 
 .fs-menu__section-head .t-label-s {
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-menu__cards {

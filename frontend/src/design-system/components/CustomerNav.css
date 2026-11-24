@@ -65,7 +65,7 @@
 }
 
 .fs-customer-nav__search input::placeholder {
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-customer-nav__cart {

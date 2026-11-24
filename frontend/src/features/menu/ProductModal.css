@@ -44,7 +44,7 @@
 .fs-product-modal__facts span {
   font: 600 12px/16px var(--font-sans);
   letter-spacing: 0.2px;
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-product-modal__details {
@@ -147,7 +147,7 @@
 .fs-product-modal__ingredient-hint {
   font: 600 12px/16px var(--font-sans);
   letter-spacing: 0.2px;
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-product-modal__ingredient-hint--price {

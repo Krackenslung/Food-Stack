@@ -87,7 +87,7 @@
   padding-inline: 14px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-products__search input {
@@ -128,7 +128,7 @@
 .fs-products__name small {
   display: block;
   font: 400 12px/16px var(--font-sans);
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-products__stock {

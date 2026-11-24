@@ -71,7 +71,7 @@ describe('language and theme toggles', () => {
     renderApp('/menu')
     await screen.findByRole('heading', { name: 'Our menu' })
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Español' })[0])
+    await userEvent.click(screen.getAllByRole('button', { name: 'ES, Español' })[0])
     expect(await screen.findByRole('heading', { name: 'Nuestro menú' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('es')
     expect(window.localStorage.getItem('foodstack-lang')).toBe('es')

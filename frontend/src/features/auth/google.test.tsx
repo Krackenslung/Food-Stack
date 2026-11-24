@@ -34,7 +34,7 @@ describe('Google sign-in (demo button)', () => {
     )
 
     await waitFor(() => expect(currentPath()).toBe('/'), SLOW)
-    expect(await screen.findByRole('link', { name: 'Account' }, SLOW)).toHaveTextContent('GD')
+    expect(await screen.findByRole('link', { name: /Account$/ }, SLOW)).toHaveTextContent('GD')
     const created = db.users().find((user) => user.email === 'google.demo@example.com')
     expect(created).toMatchObject({
       role: 'customer',
@@ -60,7 +60,7 @@ describe('Google sign-in (demo button)', () => {
     expect(await screen.findByRole('button', { name: /Continue with Google/ })).toBeInTheDocument()
     expect(screen.getByRole('separator')).toHaveTextContent('or with email')
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Español' })[0])
+    await userEvent.click(screen.getAllByRole('button', { name: 'ES, Español' })[0])
     expect(
       await screen.findByRole('button', { name: 'Continuar con Google (demo)' }),
     ).toBeInTheDocument()

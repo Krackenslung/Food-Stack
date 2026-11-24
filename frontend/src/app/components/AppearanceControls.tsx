@@ -22,7 +22,7 @@ export function AppearanceControls() {
             type="button"
             className="fs-appearance__btn"
             aria-pressed={language === code}
-            aria-label={t(`language.${code}`)}
+            aria-label={`${code.toUpperCase()}, ${t(`language.${code}`)}`}
             onClick={() => setLanguage(code)}
           >
             {code.toUpperCase()}

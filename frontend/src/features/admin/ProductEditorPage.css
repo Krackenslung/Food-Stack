@@ -112,7 +112,7 @@
 .fs-editor__hint {
   margin: var(--space-4) 0 0;
   font: 400 12px/16px var(--font-sans);
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-editor__counter {

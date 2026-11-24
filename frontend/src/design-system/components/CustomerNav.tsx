@@ -81,7 +81,11 @@ export function CustomerNav({
             {cartCount}
           </span>
         </Link>
-        <Link to={accountTo} className="fs-customer-nav__avatar" aria-label={accountLabel}>
+        <Link
+          to={accountTo}
+          className="fs-customer-nav__avatar"
+          aria-label={`${initials} ${accountLabel}`}
+        >
           {initials}
         </Link>
       </div>

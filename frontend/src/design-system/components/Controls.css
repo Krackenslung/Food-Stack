@@ -66,7 +66,7 @@
 }
 
 .fs-textarea textarea::placeholder {
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-textarea textarea:focus {

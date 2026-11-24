@@ -49,7 +49,7 @@
 }
 
 .fs-input input::placeholder {
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .fs-input__message {

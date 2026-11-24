@@ -41,7 +41,7 @@
   margin: 0;
   padding-top: var(--space-24);
   border-top: 1px solid var(--color-border-default);
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 @media (width <= 767px) {

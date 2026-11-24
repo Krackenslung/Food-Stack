@@ -8,3 +8,5 @@ assets
 public
 *.html
 !index.html
+test-results
+playwright-report

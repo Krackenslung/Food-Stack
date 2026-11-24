@@ -33,6 +33,7 @@ export function CartPage() {
   if (items.length === 0) {
     return (
       <div className="fs-page">
+        <h1 className="sr-only">{t('pages.cart')}</h1>
         <EmptyState
           title={t('cart.emptyTitle')}
           description={t('cart.emptyHint')}
