@@ -1,0 +1,42 @@
+.fs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.fs-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentcolor;
+}
+
+.fs-badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.fs-badge--warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.fs-badge--danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.fs-badge--info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.fs-badge--neutral {
+  background: var(--color-surface-muted);
+  color: var(--color-ink-700);
+}
+.fs-badge--brand {
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+}

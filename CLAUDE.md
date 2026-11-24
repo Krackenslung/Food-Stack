@@ -143,11 +143,17 @@ pytest tests/test_order_service.py::test_design_example_totals_28_80   # single 
 ruff check . && ruff format --check .   # lint + format (legacy layers are excluded from format)
 ```
 
-**Target (once the new frontend and tooling exist)**
+**Frontend (Phase 2, Current)**
 ```bash
-cd frontend && npm install && npm run dev        # Vite dev server on :5173, proxies /api → :5000
-npm run build                                    # outputs frontend/dist, which Flask serves in production
-npm run lint && npm run typecheck && npm test    # ESLint + tsc + Vitest
+cd frontend && npm install
+npm run dev          # Vite on :5173, proxies /api -> :5000 (design-system QA page: /_design-system)
+npm run build        # tsc -b + vite build -> frontend/dist (Flask does not serve it yet)
+npm run lint && npm run typecheck && npm test && npm run format:check
+npx vitest run src/lib/lib.test.ts -t "theme"   # single test
+```
+
+**Target (not built yet)**
+```bash
 npx playwright test                              # E2E: checkout, login, kitchen flow
 stripe listen --forward-to localhost:5000/api/payments/webhook   # local Stripe webhooks
 ```
@@ -242,8 +248,11 @@ tests/                      # pytest: services with a fake connection, controlle
 - Demo mode: `js/demo-catalog.js`, `data.js` and `admin-data.js` provide fallback data when the API is down. It is toggled by `DEV_FALLBACK_MODE`, `?demo=1|0` or `localStorage['foodstack-demo-mode']`.
 - Staff views validate the session with `GET /api/session`, not just localStorage.
 - Serve the frontend through Flask (same origin) rather than Live Server, to avoid cookie/session problems.
+- **Legacy pages shadow SPA routes.** `menu.html`, `cart.html`, `login.html`, `signup.html` share a folder (and Flask's `<name>.html` lookup) with the new app. The Vite dev server has a `spaFirst` plugin so `/menu` etc. render React; Flask will need the same precedence when it serves `dist` (Phase 7 removes the legacy pages).
 
 ### Frontend (Target)
+**Done in Phase 2:** the Vite + React 18 + TypeScript app lives in `frontend/` next to the legacy pages (`index.html`, `src/`, `package.json`). It has `design-system/` (tokens.css light + dark, typography, motion tokens, the 10 Figma components + `TabBar`, Lucide icons), the router with every route in the screen map as a placeholder, role guards (`RequireRole`), `CustomerLayout` / `MobileTabLayout` / `AdminLayout`, theme + language + auth providers, `locales/en.json` + `es.json`, `lib/api-client.ts`, and Vitest tests. **Not done:** all real screens (Phase 3/6), Tailwind, Zustand cart, MSW demo mode, Playwright, and Flask serving `frontend/dist`.
+
 React 18 + Vite + TypeScript, built to `frontend/dist` and served by Flask (same origin in production; the Vite proxy in development).
 ```
 frontend/src/
@@ -254,7 +263,7 @@ frontend/src/
   locales/             # en.json, es.json
 ```
 - Data fetching uses TanStack Query (the `refetchInterval: 10_000` for live views). The cart lives in a small Zustand store persisted to localStorage, and is re-priced by the API at checkout.
-- Styling: CSS variables from `tokens.css`, with Tailwind configured to read those variables (`bg-surface-card`, `text-ink-900`…). Never hard-code colors.
+- Styling: CSS variables from `tokens.css`. Phase 2 components use plain CSS files that only reference those variables (no Tailwind yet; add it only if screens need utilities, mapped to the same variables). Never hard-code colors: no hex outside `tokens.css`.
 - Carry demo mode forward as a mock API adapter (MSW), used for client demos without a database.
 - Accessibility:
   - Every control is keyboard-reachable with a visible focus ring (`brand-500`).
@@ -447,7 +456,7 @@ Setup: `docs/sql/schema.sql` (baseline) → `docs/sql/migrations/NNN_*.sql` (ide
 - [x] Phase 0: Remove the Hotels leftovers, fix the ODBC driver env var, restrict CORS, re-enable auth on orders, return proper HTTP codes. (Scope: order, order_product and order_product_ingredient controllers; catalog/user/category controllers still have `#@require_auth` commented out and per-line ownership checks come with the Phase 1 services.)
 - [x] Database: migrations 001–007, the 4-category seed and `scripts/migrate.py`.
 - [ ] Phase 1: `app_factory`, `config`, `Services/` layer, update the models and controllers for the new columns, pytest + Ruff. (Done: app_factory, config, errors, order_service, pytest + Ruff + CI step. **Remaining:** model/controller column updates and wiring the service into controllers, blocked until migrations 001-007 are committed to the repo.)
-- [ ] Phase 2: Vite + React + TS app, `tokens.css` (light + dark), design-system components, routing, i18n + theme scaffolding.
+- [x] Phase 2: Vite + React + TS app, `tokens.css` (light + dark), design-system components, routing, i18n + theme scaffolding. (Components verified against Figma in light and dark. Provisional: `--shadow-md/lg`, `--color-on-dark`, `--radius-tile/card` are not in the Figma variables. Mobile floating cart bar waits for the Phase 3 cart store.)
 - [ ] Phase 3: Customer screens (Landing, Menu, Product modal, Cart, Checkout without payment, Tracking, My Orders, Login, Sign up) plus the mobile layouts.
 - [ ] Phase 4: Stripe (PaymentIntents, webhook, refunds, promo codes).
 - [ ] Phase 5: Google OAuth.

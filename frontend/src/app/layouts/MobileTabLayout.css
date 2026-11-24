@@ -1,0 +1,12 @@
+.fs-mobile-shell {
+  min-height: 100vh;
+}
+
+/* Leave room for the fixed tab bar (10 + 42 + 24 px plus the home-indicator inset). */
+.fs-mobile-shell__content {
+  padding: var(--space-16) var(--space-16) calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.fs-mobile-shell__settings {
+  margin-top: var(--space-24);
+}

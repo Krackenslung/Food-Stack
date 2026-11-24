@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "menu": "Menu",
+    "deals": "Deals",
+    "trackOrder": "Track order",
+    "locations": "Locations",
+    "search": "Search burgers, burritos…",
+    "cart": "Cart",
+    "account": "Account",
+    "login": "Log in"
+  },
+  "tabs": {
+    "label": "Main navigation",
+    "home": "Home",
+    "menu": "Menu",
+    "orders": "Orders",
+    "profile": "Profile"
+  },
+  "admin": {
+    "groups": {
+      "overview": "Overview",
+      "catalog": "Catalog",
+      "business": "Business"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "kitchen": "Kitchen board",
+      "products": "Products",
+      "categories": "Categories",
+      "ingredients": "Ingredients",
+      "customers": "Customers",
+      "reports": "Reports"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "staff": "Staff"
+    },
+    "logout": "Log out"
+  },
+  "common": {
+    "comingSoon": "Coming soon",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "backHome": "Back to home",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "addToCart": "Add to cart"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español"
+  },
+  "pages": {
+    "landing": "Welcome to FoodStack",
+    "menu": "Menu",
+    "product": "Product",
+    "cart": "Your cart",
+    "checkout": "Checkout",
+    "tracking": "Order tracking",
+    "myOrders": "My orders",
+    "login": "Log in",
+    "signup": "Sign up",
+    "adminDashboard": "Dashboard",
+    "kitchen": "Kitchen board",
+    "adminProducts": "Products",
+    "productEditor": "Product editor",
+    "adminOrders": "Orders",
+    "notFound": "Page not found",
+    "placeholder": "This screen is built in a later phase."
+  },
+  "errors": {
+    "default": "Something went wrong. Please try again.",
+    "NETWORK_ERROR": "We couldn't reach the server. Check your connection.",
+    "UNAUTHENTICATED": "Please log in to continue.",
+    "FORBIDDEN": "You don't have access to this.",
+    "NOT_FOUND": "We couldn't find that.",
+    "RECORD_NOT_FOUND": "We couldn't find that.",
+    "VALIDATION_ERROR": "Please check the highlighted fields.",
+    "ORDER_INVALID_TRANSITION": "That order can't move to that status.",
+    "ORDER_CANCEL_NOT_ALLOWED": "This order can no longer be cancelled.",
+    "INTERNAL_ERROR": "Something went wrong on our side. Please try again."
+  }
+}

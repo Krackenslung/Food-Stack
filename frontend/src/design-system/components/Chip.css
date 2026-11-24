@@ -1,0 +1,25 @@
+.fs-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-card);
+  color: var(--color-ink-700);
+  font: 600 14px/20px var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.fs-chip:hover:not(.fs-chip--active) {
+  background: var(--color-surface-muted);
+}
+
+.fs-chip--active {
+  background: var(--color-surface-dark);
+  border-color: var(--color-surface-dark);
+  color: var(--color-on-dark);
+}

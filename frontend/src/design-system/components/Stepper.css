@@ -1,0 +1,39 @@
+.fs-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-full);
+}
+
+.fs-stepper__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-card);
+  color: var(--color-ink-900);
+  cursor: pointer;
+}
+
+.fs-stepper__btn--plus {
+  background: var(--color-brand-500);
+  color: var(--color-on-brand);
+}
+
+.fs-stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fs-stepper__value {
+  width: 28px;
+  text-align: center;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}

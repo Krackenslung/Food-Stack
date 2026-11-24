@@ -1,0 +1,30 @@
+.fs-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fs-logo__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding-inline: 7px;
+  background: var(--color-brand-500);
+  border-radius: var(--radius-tile);
+}
+
+.fs-logo__word {
+  font: 800 22px/1.2 var(--font-sans);
+  letter-spacing: -0.6px;
+  color: var(--color-ink-900);
+  white-space: nowrap;
+}
+
+.fs-logo--on-dark .fs-logo__word {
+  color: var(--color-on-dark);
+}
+
+.fs-logo__accent {
+  color: var(--color-brand-500);
+}

@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "menu": "Menú",
+    "deals": "Ofertas",
+    "trackOrder": "Rastrea tu pedido",
+    "locations": "Sucursales",
+    "search": "Busca hamburguesas, burritos…",
+    "cart": "Carrito",
+    "account": "Cuenta",
+    "login": "Inicia sesión"
+  },
+  "tabs": {
+    "label": "Navegación principal",
+    "home": "Inicio",
+    "menu": "Menú",
+    "orders": "Pedidos",
+    "profile": "Perfil"
+  },
+  "admin": {
+    "groups": {
+      "overview": "Resumen",
+      "catalog": "Catálogo",
+      "business": "Negocio"
+    },
+    "items": {
+      "dashboard": "Panel",
+      "orders": "Pedidos",
+      "kitchen": "Cocina",
+      "products": "Productos",
+      "categories": "Categorías",
+      "ingredients": "Ingredientes",
+      "customers": "Clientes",
+      "reports": "Reportes"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "staff": "Personal"
+    },
+    "logout": "Cerrar sesión"
+  },
+  "common": {
+    "comingSoon": "Próximamente",
+    "loading": "Cargando…",
+    "retry": "Intenta de nuevo",
+    "backHome": "Volver al inicio",
+    "increase": "Aumentar cantidad",
+    "decrease": "Disminuir cantidad",
+    "addToCart": "Agregar al carrito"
+  },
+  "theme": {
+    "label": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "es": "Español"
+  },
+  "pages": {
+    "landing": "Bienvenido a FoodStack",
+    "menu": "Menú",
+    "product": "Producto",
+    "cart": "Tu carrito",
+    "checkout": "Pago",
+    "tracking": "Seguimiento del pedido",
+    "myOrders": "Mis pedidos",
+    "login": "Inicia sesión",
+    "signup": "Crea tu cuenta",
+    "adminDashboard": "Panel",
+    "kitchen": "Cocina",
+    "adminProducts": "Productos",
+    "productEditor": "Editor de producto",
+    "adminOrders": "Pedidos",
+    "notFound": "Página no encontrada",
+    "placeholder": "Esta pantalla se construye en una fase posterior."
+  },
+  "errors": {
+    "default": "Algo salió mal. Inténtalo de nuevo.",
+    "NETWORK_ERROR": "No pudimos conectarnos al servidor. Revisa tu conexión.",
+    "UNAUTHENTICATED": "Inicia sesión para continuar.",
+    "FORBIDDEN": "No tienes acceso a esto.",
+    "NOT_FOUND": "No encontramos lo que buscas.",
+    "RECORD_NOT_FOUND": "No encontramos lo que buscas.",
+    "VALIDATION_ERROR": "Revisa los campos marcados.",
+    "ORDER_INVALID_TRANSITION": "Ese pedido no puede pasar a ese estado.",
+    "ORDER_CANCEL_NOT_ALLOWED": "Este pedido ya no se puede cancelar.",
+    "INTERNAL_ERROR": "Algo falló de nuestro lado. Inténtalo de nuevo."
+  }
+}

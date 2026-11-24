@@ -1,0 +1,24 @@
+.fs-admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.fs-admin-shell__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fs-admin-shell__topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-16) var(--space-32);
+  background: var(--color-surface-card);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.fs-admin-shell__content {
+  flex: 1;
+  padding: var(--space-32);
+}

@@ -1,0 +1,102 @@
+.fs-customer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  height: 80px;
+  padding-inline: 80px;
+  background: var(--color-surface-card);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.fs-customer-nav__left,
+.fs-customer-nav__right,
+.fs-customer-nav__links {
+  display: flex;
+  align-items: center;
+}
+
+.fs-customer-nav__left {
+  gap: var(--space-48);
+}
+
+.fs-customer-nav__links {
+  gap: var(--space-32);
+}
+
+.fs-customer-nav__link {
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+  white-space: nowrap;
+}
+
+.fs-customer-nav__link:hover {
+  color: var(--color-ink-900);
+}
+
+.fs-customer-nav__link--active {
+  color: var(--color-ink-900);
+}
+
+.fs-customer-nav__right {
+  gap: var(--space-12);
+}
+
+.fs-customer-nav__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 280px;
+  height: 44px;
+  padding-inline: var(--space-16);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-500);
+}
+
+.fs-customer-nav__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--color-ink-900);
+}
+
+.fs-customer-nav__search input::placeholder {
+  color: var(--color-ink-400);
+}
+
+.fs-customer-nav__cart {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 44px;
+  padding-inline: var(--space-16);
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-md);
+  color: var(--color-on-dark);
+  font: 600 14px/20px var(--font-sans);
+}
+
+.fs-customer-nav__count {
+  padding: 1px 7px;
+  background: var(--color-brand-500);
+  border-radius: var(--radius-full);
+  color: var(--color-on-brand);
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.2px;
+}
+
+.fs-customer-nav__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--color-brand-100);
+  border-radius: var(--radius-full);
+  color: var(--color-brand-700);
+  font: 600 14px/20px var(--font-sans);
+}

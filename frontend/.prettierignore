@@ -1,0 +1,9 @@
+dist
+node_modules
+package-lock.json
+# Legacy static pages, removed in Phase 7
+css
+js
+assets
+*.html
+!index.html

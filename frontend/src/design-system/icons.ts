@@ -1,0 +1,47 @@
+/**
+ * Every icon in Figma is a Lucide icon. This maps the Figma layer names
+ * ("Icon/<name>") to the Lucide export so screens import from one place.
+ */
+export {
+  ArrowRight,
+  Bell,
+  ChartColumn as Chart,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  Pencil as Edit,
+  Eye,
+  Filter,
+  Flame,
+  LayoutGrid as Grid,
+  Heart,
+  House as Home,
+  Lock,
+  LogOut as Logout,
+  Mail,
+  MapPin,
+  Minus,
+  Ellipsis as More,
+  Package,
+  Phone,
+  Plus,
+  Receipt,
+  Search,
+  Shield,
+  SlidersHorizontal as Sliders,
+  Star,
+  ShoppingCart as Cart,
+  Trash2 as Trash,
+  TrendingUp as Trending,
+  Truck,
+  User,
+  Users,
+  Utensils,
+  X,
+  Zap,
+} from 'lucide-react'
+
+export type { LucideIcon } from 'lucide-react'

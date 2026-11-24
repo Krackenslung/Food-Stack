@@ -1,0 +1,63 @@
+.fs-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.fs-input__label {
+  font: 600 14px/20px var(--font-sans);
+  color: var(--color-ink-700);
+}
+
+.fs-input__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding-inline: var(--space-16);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-500);
+}
+
+/* Focus and error draw a 2px border (1px border + 1px inset ring, so layout never shifts). */
+.fs-input__field:focus-within {
+  border-color: var(--color-brand-500);
+  box-shadow: inset 0 0 0 1px var(--color-brand-500);
+  color: var(--color-brand-500);
+}
+
+.fs-input--error .fs-input__field {
+  border-color: var(--color-danger);
+  box-shadow: inset 0 0 0 1px var(--color-danger);
+}
+
+.fs-input__icon {
+  flex: none;
+}
+
+.fs-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink-900);
+  font: 400 16px/24px var(--font-sans);
+}
+
+.fs-input input::placeholder {
+  color: var(--color-ink-400);
+}
+
+.fs-input__message {
+  margin: 0;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--color-ink-500);
+}
+
+.fs-input--error .fs-input__message {
+  color: var(--color-danger);
+}
