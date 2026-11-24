@@ -36,6 +36,15 @@ function currentUser(): MockUser | null {
 
 // ---- store -----------------------------------------------------------------
 
+/** Card payments in the demo. localStorage['foodstack-mock-payments'] = '0' turns them off. */
+function paymentsEnabled(): boolean {
+  try {
+    return window.localStorage.getItem('foodstack-mock-payments') !== '0'
+  } catch {
+    return true
+  }
+}
+
 const OPENS = 11
 const CLOSES = 23
 
@@ -69,6 +78,7 @@ function storeInfo(): StoreInfo {
     timezone: 'America/Tijuana',
     currency: 'USD',
     isOpen,
+    paymentsEnabled: paymentsEnabled(),
     opensAt: `${OPENS}:00`,
     closesAt: `${CLOSES}:00`,
     waitMinutes: 15,
@@ -115,10 +125,13 @@ function toProductDetail(product: MockProduct, lang: Language): ProductDetail {
 const RECEIVED_FOR_MS = 20_000
 const PREPARING_FOR_MS = 60_000
 
-/** Demo progression: received -> preparing after 20s -> ready after 60s. */
+const isCard = (order: MockOrder) => order.request.paymentMethod === 'card'
+
+/** Demo progression: received -> preparing after 20s -> ready after 60s (counted from payment). */
 function statusOf(order: MockOrder, now = Date.now()): OrderStatus {
   if (order.status === 'cancelled' || order.status === 'completed') return order.status
-  const age = now - order.createdAt
+  if (isCard(order) && order.paidAt === null) return 'pending_payment'
+  const age = now - (order.paidAt ?? order.createdAt)
   if (age < RECEIVED_FOR_MS) return 'received'
   if (age < PREPARING_FOR_MS) return 'preparing'
   return 'ready'
@@ -126,32 +139,26 @@ function statusOf(order: MockOrder, now = Date.now()): OrderStatus {
 
 function historyOf(order: MockOrder, now = Date.now()): OrderHistoryEntry[] {
   const iso = (ms: number) => new Date(ms).toISOString()
-  const entries: OrderHistoryEntry[] = [
-    { fromStatus: null, toStatus: 'received', createdAt: iso(order.createdAt) },
-  ]
+  const entries: OrderHistoryEntry[] = []
+  let from: OrderStatus | null = null
+  const push = (to: OrderStatus, at: number) => {
+    entries.push({ fromStatus: from, toStatus: to, createdAt: iso(at) })
+    from = to
+  }
+
+  if (isCard(order)) push('pending_payment', order.createdAt)
+  const receivedAt = order.paidAt ?? order.createdAt
+  if (!isCard(order) || order.paidAt !== null) push('received', receivedAt)
+
   if (order.status === 'cancelled') {
-    entries.push({
-      fromStatus: 'received',
-      toStatus: 'cancelled',
-      createdAt: iso(order.cancelledAt ?? now),
-    })
+    push('cancelled', order.cancelledAt ?? now)
     return entries
   }
-  const age = now - order.createdAt
-  if (age >= RECEIVED_FOR_MS) {
-    entries.push({
-      fromStatus: 'received',
-      toStatus: 'preparing',
-      createdAt: iso(order.createdAt + RECEIVED_FOR_MS),
-    })
+  const age = now - receivedAt
+  if (entries.length > 0 && from === 'received' && age >= RECEIVED_FOR_MS) {
+    push('preparing', receivedAt + RECEIVED_FOR_MS)
   }
-  if (age >= PREPARING_FOR_MS) {
-    entries.push({
-      fromStatus: 'preparing',
-      toStatus: 'ready',
-      createdAt: iso(order.createdAt + PREPARING_FOR_MS),
-    })
-  }
+  if (from === 'preparing' && age >= PREPARING_FOR_MS) push('ready', receivedAt + PREPARING_FOR_MS)
   return entries
 }
 
@@ -164,7 +171,13 @@ function baseSummary(order: MockOrder): Omit<OrderSummary, 'items'> {
     id: order.id,
     orderNumber: `FS-${1000 + order.id}`,
     status: statusOf(order),
-    paymentStatus: 'pay_at_counter',
+    paymentStatus: !isCard(order)
+      ? 'pay_at_counter'
+      : order.refunded
+        ? 'refunded'
+        : order.paidAt === null
+          ? 'unpaid'
+          : 'paid',
     total: order.quote.total,
     createdAt: new Date(order.createdAt).toISOString(),
     itemCount: order.lines.reduce((sum, line) => sum + line.quantity, 0),
@@ -186,7 +199,7 @@ function toDetail(order: MockOrder, lang: Language): OrderDetail {
   const status = statusOf(order)
 
   const longestPrep = Math.max(...order.lines.map((l) => productOf(l.productId).prepTimeMax))
-  const readyAt = order.createdAt + longestPrep * 60_000
+  const readyAt = (order.paidAt ?? order.createdAt) + longestPrep * 60_000
   const active = status === 'received' || status === 'preparing'
 
   return {
@@ -341,8 +354,11 @@ export const handlers = [
     if (body.fulfillmentType === 'delivery' && !body.deliveryAddress?.trim()) {
       return fail('A delivery address is required.', 'DELIVERY_ADDRESS_REQUIRED', 422)
     }
-    if (body.paymentMethod !== 'counter') {
-      return fail('Card payments are not available yet.', 'PAYMENT_METHOD_UNAVAILABLE', 422)
+    if (body.paymentMethod === 'card' && !paymentsEnabled()) {
+      return fail('Card payments are not available.', 'PAYMENT_METHOD_UNAVAILABLE', 409)
+    }
+    if (body.paymentMethod !== 'card' && body.paymentMethod !== 'counter') {
+      return fail('Invalid payment method.', 'PAYMENT_METHOD_INVALID', 422)
     }
 
     try {
@@ -363,6 +379,8 @@ export const handlers = [
         createdAt: Date.now(),
         status: 'received',
         cancelledAt: null,
+        paidAt: null,
+        refunded: false,
         request: body,
         lines: quote.lines,
         quote: {
@@ -377,12 +395,36 @@ export const handlers = [
       }
       db.saveOrders([...orders, order])
       return ok(
-        { orderId: order.id, orderNumber: `FS-${1000 + order.id}`, total: quote.total },
+        {
+          orderId: order.id,
+          orderNumber: `FS-${1000 + order.id}`,
+          total: quote.total,
+          ...(body.paymentMethod === 'card' ? { clientSecret: `mock_secret_${order.id}` } : {}),
+        },
         201,
       )
     } catch (error) {
       return validationFailure(error)
     }
+  }),
+
+  // Stand-in for Stripe + its webhook in demo mode. 4000 0000 0000 9995 is Stripe's "declined" test card.
+  http.post(route('/_mock/payments/:id/confirm'), async ({ params, request }) => {
+    const user = currentUser()
+    if (!user) return fail('Not authenticated', 'UNAUTHENTICATED', 401)
+    const orders = db.orders()
+    const order = orders.find((o) => o.id === Number(params.id))
+    if (!order || order.userId !== user.id) return fail('Order not found.', 'RECORD_NOT_FOUND', 404)
+
+    const { cardNumber } = (await request.json()) as { cardNumber: string }
+    if (String(cardNumber).replace(/\s/g, '') === '4000000000009995') {
+      return fail('Your card was declined.', 'CARD_DECLINED', 402)
+    }
+    if (order.paidAt === null) {
+      order.paidAt = Date.now()
+      db.saveOrders(orders)
+    }
+    return ok({ status: 'paid' })
   }),
 
   http.get(route('/me/orders'), ({ request }) => {
@@ -440,6 +482,7 @@ export const handlers = [
     }
     order.status = 'cancelled'
     order.cancelledAt = Date.now()
+    if (isCard(order) && order.paidAt !== null) order.refunded = true
     db.saveOrders(orders)
     return ok({ status: 'cancelled' })
   }),

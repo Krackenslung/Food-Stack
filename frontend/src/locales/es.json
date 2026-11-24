@@ -244,7 +244,7 @@
     "scheduleAt": "Elige fecha y hora",
     "scheduleHint": "Aceptamos pedidos entre las {{opens}} y las {{closes}}, hoy o mañana.",
     "payment": "Método de pago",
-    "paymentHint": "El pago en línea llegará pronto",
+    "paymentHint": "Paga en línea o cuando recojas",
     "card": "Tarjeta de crédito / débito",
     "counter": "Pagar en mostrador",
     "counterDesc": "Paga cuando recojas tu pedido",
@@ -260,7 +260,17 @@
       "SCHEDULE_PAST": "Elige una hora al menos 15 minutos a partir de ahora.",
       "SCHEDULE_TOO_FAR": "Solo puedes programar para hoy o mañana.",
       "SCHEDULE_OUTSIDE_HOURS": "Esa hora está fuera de nuestro horario."
-    }
+    },
+    "cardDesc": "Visa, Mastercard, Apple Pay, Google Pay",
+    "payTitle": "Paga con tarjeta",
+    "payHint": "Tu pedido está reservado. Paga {{total}} para enviarlo a la cocina.",
+    "pay": "Pagar {{total}}",
+    "paying": "Procesando el pago…",
+    "paymentUnavailable": "Aún no están configurados los pagos con tarjeta en este sitio.",
+    "demoHint": "Modo demo: no se hace ningún cargo. Usa 4000 0000 0000 9995 para simular una tarjeta rechazada.",
+    "cardNumber": "Número de tarjeta",
+    "expiry": "Vencimiento",
+    "cvc": "CVC"
   },
   "tracking": {
     "orderNumber": "Pedido #{{number}}",
@@ -408,6 +418,8 @@
     "PRODUCT_NOT_CUSTOMIZABLE": "Ese producto no se puede personalizar.",
     "QUANTITY_INVALID": "Revisa la cantidad de tus productos.",
     "PROMO_NOT_FOUND": "No reconocemos ese código promocional.",
-    "PROMO_FIRST_ORDER_ONLY": "Ese código solo vale en tu primer pedido."
+    "PROMO_FIRST_ORDER_ONLY": "Ese código solo vale en tu primer pedido.",
+    "CARD_DECLINED": "Tu tarjeta fue rechazada. Prueba con otra.",
+    "ORDER_NOT_PAYABLE": "Este pedido no está esperando pago."
   }
 }

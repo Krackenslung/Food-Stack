@@ -244,7 +244,7 @@
     "scheduleAt": "Pick a date and time",
     "scheduleHint": "Orders are accepted between {{opens}} and {{closes}}, today or tomorrow.",
     "payment": "Payment method",
-    "paymentHint": "Online payment is coming soon",
+    "paymentHint": "Pay online or when you pick up",
     "card": "Credit / debit card",
     "counter": "Pay at counter",
     "counterDesc": "Pay when you pick up your order",
@@ -260,7 +260,17 @@
       "SCHEDULE_PAST": "Pick a time at least 15 minutes from now.",
       "SCHEDULE_TOO_FAR": "You can only schedule for today or tomorrow.",
       "SCHEDULE_OUTSIDE_HOURS": "That time is outside our opening hours."
-    }
+    },
+    "cardDesc": "Visa, Mastercard, Apple Pay, Google Pay",
+    "payTitle": "Pay with card",
+    "payHint": "Your order is reserved. Pay {{total}} to send it to the kitchen.",
+    "pay": "Pay {{total}}",
+    "paying": "Processing payment…",
+    "paymentUnavailable": "Card payments are not set up on this site yet.",
+    "demoHint": "Demo mode: no real charge. Use 4000 0000 0000 9995 to simulate a declined card.",
+    "cardNumber": "Card number",
+    "expiry": "Expiry",
+    "cvc": "CVC"
   },
   "tracking": {
     "orderNumber": "Order #{{number}}",
@@ -408,6 +418,8 @@
     "PRODUCT_NOT_CUSTOMIZABLE": "That item can't be customized.",
     "QUANTITY_INVALID": "Check the quantity of your items.",
     "PROMO_NOT_FOUND": "We don't recognize that promo code.",
-    "PROMO_FIRST_ORDER_ONLY": "That code is only valid on your first order."
+    "PROMO_FIRST_ORDER_ONLY": "That code is only valid on your first order.",
+    "CARD_DECLINED": "Your card was declined. Try another card.",
+    "ORDER_NOT_PAYABLE": "This order is not awaiting payment."
   }
 }

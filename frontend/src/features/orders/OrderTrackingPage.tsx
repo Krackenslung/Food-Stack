@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useLanguage } from '../../app/providers/LanguageProvider'
@@ -18,6 +18,8 @@ import type { LucideIcon } from '../../design-system'
 import { api } from '../../lib/api/endpoints'
 import type { OrderDetail, OrderStatus } from '../../lib/api/types'
 import { formatDateTime } from '../../lib/format'
+import { useCartStore } from '../cart/cartStore'
+import { clearPendingOrder, readPendingOrder } from '../checkout/pendingOrder'
 import { apiErrorMessage } from '../shared/helpers'
 import { useMoney, useStoreInfo } from '../shared/queries'
 import { StatusBadge } from '../shared/StatusBadge'
@@ -53,6 +55,14 @@ export function OrderTrackingPage() {
       return status === 'completed' || status === 'cancelled' ? false : POLL_MS
     },
   })
+
+  // A card order empties the cart only once payment is confirmed (see checkout/pendingOrder).
+  const clearCart = useCartStore((state) => state.clear)
+  useEffect(() => {
+    if (!order || readPendingOrder() !== order.id) return
+    if (order.paymentStatus === 'paid') clearCart()
+    if (order.paymentStatus === 'paid' || order.status === 'cancelled') clearPendingOrder()
+  }, [order, clearCart])
 
   if (isError) {
     return (

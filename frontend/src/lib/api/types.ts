@@ -56,6 +56,8 @@ export type StoreInfo = {
   timezone: string
   currency: string
   isOpen: boolean
+  /** (proposed) true when the backend has Stripe keys configured. */
+  paymentsEnabled: boolean
   /** "HH:MM" local time; used for "Closed · opens at 11:00" and "Open until 11:00 PM". */
   opensAt: string
   closesAt: string

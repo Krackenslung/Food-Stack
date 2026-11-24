@@ -18,6 +18,9 @@ export type MockOrder = {
   createdAt: number
   status: OrderStatus
   cancelledAt: number | null
+  /** Card orders: when the (mock) webhook confirmed payment. Null = still unpaid. */
+  paidAt: number | null
+  refunded: boolean
   request: CheckoutRequest
   lines: QuoteLine[]
   quote: {

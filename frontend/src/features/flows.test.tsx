@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { api } from '../lib/api/endpoints'
@@ -177,6 +177,93 @@ describe('checkout', () => {
     signInAs('customer')
     renderApp('/checkout')
     await waitFor(() => expect(currentPath()).toBe('/cart'))
+  })
+})
+
+describe('card payments (demo Stripe)', () => {
+  beforeEach(() => {
+    // No publishable key in tests: demo mode swaps the Payment Element for a mock card form.
+    window.localStorage.setItem('foodstack-demo-mode', '1')
+  })
+
+  async function startCardCheckout() {
+    signInAs('customer')
+    addBurger()
+    renderApp('/checkout')
+    await userEvent.click(await screen.findByRole('radio', { name: /Credit \/ debit card/ }))
+    await userEvent.type(screen.getByLabelText('Phone'), '5551234567')
+    await userEvent.click(await screen.findByRole('button', { name: /Place order/ }, SLOW))
+    return screen.findByRole('button', { name: /^Pay \$/ }, SLOW)
+  }
+
+  it('creates the order, shows the payment step and lands on tracking once paid', async () => {
+    const pay = await startCardCheckout()
+    // The cart is kept until payment is confirmed.
+    expect(useCartStore.getState().items).toHaveLength(1)
+    expect(currentPath()).toBe('/checkout')
+
+    await userEvent.click(pay)
+    await waitFor(() => expect(currentPath()).toBe('/orders/1'), SLOW)
+    expect(
+      await screen.findByRole('heading', { name: 'We got your order' }, SLOW),
+    ).toBeInTheDocument()
+    expect(await screen.findByText('Paid', undefined, SLOW)).toBeInTheDocument()
+    await waitFor(() => expect(useCartStore.getState().items).toEqual([]))
+  })
+
+  it('shows a translated error for a declined card and keeps the basket', async () => {
+    const pay = await startCardCheckout()
+    const number = screen.getByLabelText('Card number')
+    await userEvent.clear(number)
+    await userEvent.type(number, '4000 0000 0000 9995')
+    await userEvent.click(pay)
+
+    expect(await screen.findByRole('alert', undefined, SLOW)).toHaveTextContent(
+      'Your card was declined',
+    )
+    expect(currentPath()).toBe('/checkout')
+    expect(useCartStore.getState().items).toHaveLength(1)
+
+    // The customer can fix the card and pay the same order.
+    await userEvent.clear(number)
+    await userEvent.type(number, '4242 4242 4242 4242')
+    await userEvent.click(screen.getByRole('button', { name: /^Pay \$/ }))
+    await waitFor(() => expect(currentPath()).toBe('/orders/1'), SLOW)
+  })
+
+  it('an unpaid card order waits for payment and does not empty the cart', async () => {
+    await startCardCheckout()
+    cleanup()
+    // The customer walks away and opens the order page: still waiting, basket untouched.
+    renderApp('/orders/1')
+    expect(
+      await screen.findByRole('heading', { name: 'Waiting for payment' }, SLOW),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Unpaid')).toBeInTheDocument()
+    expect(useCartStore.getState().items).toHaveLength(1)
+  })
+
+  it('refunds automatically when a paid card order is cancelled', async () => {
+    const pay = await startCardCheckout()
+    await userEvent.click(pay)
+    await screen.findByRole('heading', { name: 'We got your order' }, SLOW)
+
+    await userEvent.click(screen.getByRole('button', { name: /Need to cancel/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, cancel' }))
+    expect(
+      await screen.findByRole('heading', { name: 'This order was cancelled' }, SLOW),
+    ).toBeInTheDocument()
+    expect(await screen.findByText('Refunded', undefined, SLOW)).toBeInTheDocument()
+  })
+
+  it('disables the card option when payments are not enabled', async () => {
+    window.localStorage.setItem('foodstack-mock-payments', '0')
+    signInAs('customer')
+    addBurger()
+    renderApp('/checkout')
+    const card = await screen.findByRole('radio', { name: /Credit \/ debit card/ })
+    await waitFor(() => expect(card).toBeDisabled(), SLOW)
+    expect(screen.getAllByText('Coming soon').length).toBeGreaterThan(0)
   })
 })
 

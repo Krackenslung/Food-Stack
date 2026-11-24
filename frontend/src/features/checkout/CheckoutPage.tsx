@@ -26,11 +26,13 @@ import {
   User,
 } from '../../design-system'
 import { api } from '../../lib/api/endpoints'
-import type { FulfillmentType } from '../../lib/api/types'
+import type { FulfillmentType, PaymentMethod } from '../../lib/api/types'
 import { CartSummary } from '../cart/CartSummary'
 import { toLineInputs, useCartStore } from '../cart/cartStore'
 import { apiErrorMessage, describeChanges, formatHour } from '../shared/helpers'
 import { useMoney, useQuote, useStoreInfo } from '../shared/queries'
+import { PaymentStep } from './PaymentStep'
+import { markPendingOrder } from './pendingOrder'
 import { earliestSchedule, validateSchedule } from './schedule'
 import './CheckoutPage.css'
 
@@ -58,6 +60,13 @@ export function CheckoutPage() {
   const [asap, setAsap] = useState(true)
   const [scheduledFor, setScheduledFor] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [method, setMethod] = useState<PaymentMethod>('counter')
+  // Set once a card order exists and is waiting for the customer to pay.
+  const [awaiting, setAwaiting] = useState<{
+    orderId: number
+    clientSecret: string
+    total: string
+  } | null>(null)
 
   // Set before the cart is cleared so the empty-cart guard below doesn't hijack the redirect.
   const placed = useRef(false)
@@ -65,6 +74,17 @@ export function CheckoutPage() {
   const placeOrder = useMutation({
     mutationFn: api.checkout,
     onSuccess: (result) => {
+      if (result.clientSecret) {
+        // Card: the order exists but is unpaid. Keep the cart until payment is confirmed
+        // (the tracking page clears it) so abandoning payment doesn't lose the basket.
+        markPendingOrder(result.orderId)
+        setAwaiting({
+          orderId: result.orderId,
+          clientSecret: result.clientSecret,
+          total: result.total,
+        })
+        return
+      }
       placed.current = true
       navigate(`/orders/${result.orderId}`, { replace: true })
       clearCart()
@@ -75,6 +95,7 @@ export function CheckoutPage() {
   if (items.length === 0 && !placed.current) return <Navigate to="/cart" replace />
 
   const closed = store ? !store.isOpen : false
+  const cardAvailable = store?.paymentsEnabled === true
 
   function validate(): FieldErrors {
     const next: FieldErrors = {}
@@ -104,8 +125,7 @@ export function CheckoutPage() {
       contact: { name: name.trim(), phone: phone.trim(), email: email.trim() },
       deliveryAddress: fulfillmentType === 'delivery' ? address.trim() : undefined,
       scheduledFor: asap ? undefined : new Date(scheduledFor).toISOString(),
-      // Card payments arrive in Phase 4; until then every order is paid at the counter.
-      paymentMethod: 'counter',
+      paymentMethod: method,
     })
   }
 
@@ -142,147 +162,168 @@ export function CheckoutPage() {
         </li>
       </ol>
 
-      <form className="fs-checkout__layout" onSubmit={onSubmit} noValidate>
+      <div className="fs-checkout__layout">
         <div className="fs-checkout__forms">
-          {closed && store && (
+          {awaiting && (
+            <PaymentStep
+              orderId={awaiting.orderId}
+              clientSecret={awaiting.clientSecret}
+              total={money(awaiting.total)}
+              onPaid={() => {
+                placed.current = true
+                navigate(`/orders/${awaiting.orderId}`, { replace: true })
+              }}
+            />
+          )}
+          {closed && !awaiting && store && (
             <ErrorBanner message={t('checkout.closed', { time: formatHour(store.opensAt) })} />
           )}
           {placeOrder.isError && <ErrorBanner message={apiErrorMessage(placeOrder.error, t)} />}
 
-          <section className="fs-checkout__card" aria-labelledby="contact-title">
-            <CardHeading
-              index={1}
-              id="contact-title"
-              title={t('checkout.contact')}
-              hint={t('checkout.contactHint')}
-            />
-            <div className="fs-checkout__row">
-              <Input
-                label={t('checkout.name')}
-                icon={User}
-                value={name}
-                autoComplete="name"
-                error={errors.name}
-                onChange={(event) => setName(event.target.value)}
-              />
-              <Input
-                label={t('checkout.phone')}
-                icon={Phone}
-                value={phone}
-                type="tel"
-                autoComplete="tel"
-                error={errors.phone}
-                onChange={(event) => setPhone(event.target.value)}
-              />
-            </div>
-            <Input
-              label={t('checkout.email')}
-              icon={Mail}
-              value={email}
-              type="email"
-              autoComplete="email"
-              error={errors.email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </section>
-
-          <section className="fs-checkout__card" aria-labelledby="fulfillment-title">
-            <CardHeading
-              index={2}
-              id="fulfillment-title"
-              title={t('checkout.fulfillment')}
-              hint={t('checkout.fulfillmentHint')}
-            />
-            <div className="fs-checkout__row">
-              {(['pickup', 'delivery'] as FulfillmentType[]).map((type) => (
-                <RadioCard
-                  key={type}
-                  name="fulfillment"
-                  checked={fulfillmentType === type}
-                  onChange={() => setFulfillmentType(type)}
-                  icon={type === 'pickup' ? Home : Truck}
-                  title={t(`cart.${type}`)}
-                  description={t(`checkout.${type}Desc`, { minutes: store?.waitMinutes ?? 15 })}
+          {!awaiting && (
+            <form
+              id="checkout-form"
+              className="fs-checkout__formgrid"
+              onSubmit={onSubmit}
+              noValidate
+            >
+              <section className="fs-checkout__card" aria-labelledby="contact-title">
+                <CardHeading
+                  index={1}
+                  id="contact-title"
+                  title={t('checkout.contact')}
+                  hint={t('checkout.contactHint')}
                 />
-              ))}
-            </div>
-
-            {fulfillmentType === 'pickup' && store && (
-              <div className="fs-checkout__store">
-                <MapPin size={18} aria-hidden="true" />
-                <div>
-                  <strong>{store.name}</strong>
-                  <span>{store.address}</span>
+                <div className="fs-checkout__row">
+                  <Input
+                    label={t('checkout.name')}
+                    icon={User}
+                    value={name}
+                    autoComplete="name"
+                    error={errors.name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                  <Input
+                    label={t('checkout.phone')}
+                    icon={Phone}
+                    value={phone}
+                    type="tel"
+                    autoComplete="tel"
+                    error={errors.phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                  />
                 </div>
-              </div>
-            )}
-            {fulfillmentType === 'delivery' && (
-              <Input
-                label={t('checkout.address')}
-                icon={MapPin}
-                value={address}
-                autoComplete="street-address"
-                error={errors.address}
-                onChange={(event) => setAddress(event.target.value)}
-              />
-            )}
+                <Input
+                  label={t('checkout.email')}
+                  icon={Mail}
+                  value={email}
+                  type="email"
+                  autoComplete="email"
+                  error={errors.email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </section>
 
-            <div className="fs-checkout__when">
-              <Chip active={asap} onClick={() => setAsap(true)}>
-                <Clock size={16} aria-hidden="true" />
-                {t('checkout.asap')}
-              </Chip>
-              <Chip active={!asap} onClick={() => setAsap(false)}>
-                {t('checkout.later')}
-              </Chip>
-            </div>
-            {!asap && (
-              <Input
-                label={t('checkout.scheduleAt')}
-                type="datetime-local"
-                value={scheduledFor}
-                min={earliestSchedule(new Date())}
-                error={errors.schedule}
-                helper={
-                  store
-                    ? t('checkout.scheduleHint', {
-                        opens: formatHour(store.opensAt),
-                        closes: formatHour(store.closesAt),
-                      })
-                    : undefined
-                }
-                onChange={(event) => setScheduledFor(event.target.value)}
-              />
-            )}
-          </section>
+              <section className="fs-checkout__card" aria-labelledby="fulfillment-title">
+                <CardHeading
+                  index={2}
+                  id="fulfillment-title"
+                  title={t('checkout.fulfillment')}
+                  hint={t('checkout.fulfillmentHint')}
+                />
+                <div className="fs-checkout__row">
+                  {(['pickup', 'delivery'] as FulfillmentType[]).map((type) => (
+                    <RadioCard
+                      key={type}
+                      name="fulfillment"
+                      checked={fulfillmentType === type}
+                      onChange={() => setFulfillmentType(type)}
+                      icon={type === 'pickup' ? Home : Truck}
+                      title={t(`cart.${type}`)}
+                      description={t(`checkout.${type}Desc`, { minutes: store?.waitMinutes ?? 15 })}
+                    />
+                  ))}
+                </div>
 
-          <section className="fs-checkout__card" aria-labelledby="payment-title">
-            <CardHeading
-              index={3}
-              id="payment-title"
-              title={t('checkout.payment')}
-              hint={t('checkout.paymentHint')}
-            />
-            <div className="fs-checkout__row">
-              <RadioCard
-                name="payment"
-                checked={false}
-                onChange={() => {}}
-                disabled
-                icon={CreditCard}
-                title={t('checkout.card')}
-                tag={t('common.comingSoon')}
-              />
-              <RadioCard
-                name="payment"
-                checked
-                onChange={() => {}}
-                icon={Shield}
-                title={t('checkout.counter')}
-                description={t('checkout.counterDesc')}
-              />
-            </div>
-          </section>
+                {fulfillmentType === 'pickup' && store && (
+                  <div className="fs-checkout__store">
+                    <MapPin size={18} aria-hidden="true" />
+                    <div>
+                      <strong>{store.name}</strong>
+                      <span>{store.address}</span>
+                    </div>
+                  </div>
+                )}
+                {fulfillmentType === 'delivery' && (
+                  <Input
+                    label={t('checkout.address')}
+                    icon={MapPin}
+                    value={address}
+                    autoComplete="street-address"
+                    error={errors.address}
+                    onChange={(event) => setAddress(event.target.value)}
+                  />
+                )}
+
+                <div className="fs-checkout__when">
+                  <Chip active={asap} onClick={() => setAsap(true)}>
+                    <Clock size={16} aria-hidden="true" />
+                    {t('checkout.asap')}
+                  </Chip>
+                  <Chip active={!asap} onClick={() => setAsap(false)}>
+                    {t('checkout.later')}
+                  </Chip>
+                </div>
+                {!asap && (
+                  <Input
+                    label={t('checkout.scheduleAt')}
+                    type="datetime-local"
+                    value={scheduledFor}
+                    min={earliestSchedule(new Date())}
+                    error={errors.schedule}
+                    helper={
+                      store
+                        ? t('checkout.scheduleHint', {
+                            opens: formatHour(store.opensAt),
+                            closes: formatHour(store.closesAt),
+                          })
+                        : undefined
+                    }
+                    onChange={(event) => setScheduledFor(event.target.value)}
+                  />
+                )}
+              </section>
+
+              <section className="fs-checkout__card" aria-labelledby="payment-title">
+                <CardHeading
+                  index={3}
+                  id="payment-title"
+                  title={t('checkout.payment')}
+                  hint={t('checkout.paymentHint')}
+                />
+                <div className="fs-checkout__row">
+                  <RadioCard
+                    name="payment"
+                    checked={method === 'card'}
+                    onChange={() => setMethod('card')}
+                    disabled={!cardAvailable}
+                    icon={CreditCard}
+                    title={t('checkout.card')}
+                    description={cardAvailable ? t('checkout.cardDesc') : undefined}
+                    tag={cardAvailable ? undefined : t('common.comingSoon')}
+                  />
+                  <RadioCard
+                    name="payment"
+                    checked={method === 'counter'}
+                    onChange={() => setMethod('counter')}
+                    icon={Shield}
+                    title={t('checkout.counter')}
+                    description={t('checkout.counterDesc')}
+                  />
+                </div>
+              </section>
+            </form>
+          )}
         </div>
 
         <aside className="fs-checkout__summary" aria-label={t('cart.summaryTitle')}>
@@ -312,22 +353,25 @@ export function CheckoutPage() {
             </p>
           )}
           <CartSummary quote={quote} />
-          <Button
-            type="submit"
-            size="L"
-            icon={ArrowRight}
-            className="fs-checkout__cta"
-            disabled={!quote || closed || placeOrder.isPending}
-          >
-            {placeOrder.isPending
-              ? t('checkout.placing')
-              : quote
-                ? t('checkout.placeOrder', { total: money(quote.total) })
-                : t('common.loading')}
-          </Button>
+          {!awaiting && (
+            <Button
+              type="submit"
+              form="checkout-form"
+              size="L"
+              icon={ArrowRight}
+              className="fs-checkout__cta"
+              disabled={!quote || closed || placeOrder.isPending}
+            >
+              {placeOrder.isPending
+                ? t('checkout.placing')
+                : quote
+                  ? t('checkout.placeOrder', { total: money(quote.total) })
+                  : t('common.loading')}
+            </Button>
+          )}
           <p className="fs-checkout__terms">{t('checkout.terms')}</p>
         </aside>
-      </form>
+      </div>
     </div>
   )
 }

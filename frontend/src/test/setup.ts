@@ -30,13 +30,16 @@ class MemoryStorage implements Storage {
 }
 
 const storage = new MemoryStorage()
+const session = new MemoryStorage()
 for (const target of [window, globalThis]) {
   Object.defineProperty(target, 'localStorage', { value: storage, configurable: true })
+  Object.defineProperty(target, 'sessionStorage', { value: session, configurable: true })
 }
 
 afterEach(async () => {
   cleanup()
   storage.clear()
+  session.clear()
   useCartStore.setState({ items: [], promoCode: '', fulfillmentType: 'pickup' })
   if (i18n.language !== 'en') await i18n.changeLanguage('en')
   document.documentElement.removeAttribute('data-theme')
