@@ -12,6 +12,7 @@ class SQLServerConnection:
         database = os.getenv("DATABASE")
         username = os.getenv("SQL_USER")
         password = os.getenv("SQL_PASSWORD")
+        driver = os.getenv("SQL_DRIVER") or "ODBC Driver 18 for SQL Server"
         # Set SQL_TRUST_SERVER_CERT=yes for a local SQL Server (self-signed cert).
         trust_cert = "yes" if os.getenv("SQL_TRUST_SERVER_CERT", "").lower() in ("1", "true", "yes") else "no"
 
@@ -31,7 +32,7 @@ class SQLServerConnection:
             )
 
         connectionString = (
-            "DRIVER={ODBC Driver 17 for SQL Server};"
+            f"DRIVER={{{driver}}};"
             f"SERVER={server},1433;"
             f"DATABASE={database};"
             f"UID={username};"

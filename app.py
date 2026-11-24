@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -67,11 +67,20 @@ def frontend_resource(resource):
     return send_from_directory(FRONTEND_DIR, "login.html")
 
 
+FRONTEND_ORIGIN = (os.getenv("FRONTEND_ORIGIN") or "").strip().rstrip("/")
+
+
 @app.after_request
 def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    # Same-origin (Flask serves the frontend) needs no CORS. Only the configured
+    # FRONTEND_ORIGIN may call the API cross-origin, with credentials.
+    origin = request.headers.get("Origin", "").rstrip("/")
+    if FRONTEND_ORIGIN and origin == FRONTEND_ORIGIN:
+        response.headers["Access-Control-Allow-Origin"] = FRONTEND_ORIGIN
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    response.headers.add("Vary", "Origin")
     return response
 
 

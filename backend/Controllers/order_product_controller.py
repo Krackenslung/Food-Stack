@@ -3,14 +3,15 @@ import json
 
 from backend.Models.order_product import OrderProduct
 from backend.Infrastructure.SQLServerConnection import SQLServerConnection
-from ..Security.Auth import require_auth
+from ..Security.Auth import require_auth, require_roles
 
 order_product_bp = Blueprint('order_product_bp', __name__)
 
 # GET ALL
 # --------------------------
 @order_product_bp.route('/order-products', methods=['GET'])
-#@require_auth
+@require_auth
+@require_roles("staff", "admin")
 def get_order_products():
     try:
         return jsonify({
@@ -21,14 +22,14 @@ def get_order_products():
         return jsonify({
             "status": 1,
             "errorMessage": str(e)
-        })
+        }), 500
 
 
 # GET BY ID
 # --------------------------
 @order_product_bp.route('/order-products/<int:id>', methods=['GET'])
 @order_product_bp.route('/order-product/<int:id>', methods=['GET'])
-#@require_auth
+@require_auth
 def get_order_product_by_id(id):
     try:
         return jsonify({
@@ -39,13 +40,13 @@ def get_order_product_by_id(id):
         return jsonify({
             "status": 1,
             "errorMessage": str(e)
-        })
+        }), 500
 
 
 # GET BY ORDER ID
 # --------------------------
 @order_product_bp.route('/order-products/order/<int:order_id>', methods=['GET'])
-#@require_auth
+@require_auth
 def get_order_products_by_order_id(order_id):
     try:
         with SQLServerConnection.get_connection() as conn:
@@ -57,7 +58,7 @@ def get_order_products_by_order_id(order_id):
         return jsonify({
             "status": 1,
             "errorMessage": str(e)
-        })
+        }), 500
 
 
 # POST
@@ -65,7 +66,7 @@ def get_order_products_by_order_id(order_id):
 @order_product_bp.route('/order-products', methods=['POST'])
 @order_product_bp.route('/order-product', methods=['POST'])
 @order_product_bp.route('/order-products', methods=['POST'])
-#@require_auth
+@require_auth
 def create_order_product():
     try:
         data = request.get_json() or {}
@@ -90,7 +91,7 @@ def create_order_product():
         return jsonify({
             "status": 1,
             "errorMessage": str(e)
-        })
+        }), 500
 
 
 # PUT
@@ -98,7 +99,7 @@ def create_order_product():
 @order_product_bp.route('/order-products/<int:id>', methods=['PUT'])
 @order_product_bp.route('/order-product/<int:id>', methods=['PUT'])
 @order_product_bp.route('/order-products/<int:id>', methods=['PUT'])
-#@require_auth
+@require_auth
 def update_order_product(id):
     try:
         data = request.get_json() or {}
@@ -120,4 +121,4 @@ def update_order_product(id):
         return jsonify({
             "status": 1,
             "errorMessage": str(e)
-        })
+        }), 500

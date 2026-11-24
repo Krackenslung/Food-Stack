@@ -105,3 +105,11 @@ def require_roles(*allowed_roles):
         return wrapper
 
     return decorator
+
+
+STAFF_ROLES = ("staff", "admin")
+
+
+def is_staff_request():
+    """True when the authenticated caller is staff or admin (call after @require_auth)."""
+    return str(getattr(request, "user_role", "") or "").lower() in STAFF_ROLES
