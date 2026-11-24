@@ -10,6 +10,8 @@ export type MockUser = {
   phoneNumber: string
   password: string
   role: Role
+  /** Set once a Google identity is linked to this account. */
+  googleSub?: string
 }
 
 export type MockOrder = {

@@ -6,16 +6,11 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { ArrowRight, Button, ErrorBanner, Input, Lock, Mail, Shield } from '../../design-system'
 import { api } from '../../lib/api/endpoints'
-import type { Role } from '../../lib/auth'
 import { apiErrorMessage } from '../shared/helpers'
 import { AuthLayout } from './AuthLayout'
+import { GoogleSection } from './GoogleSection'
+import { HOME_BY_ROLE } from './homeByRole'
 import './AuthForms.css'
-
-export const HOME_BY_ROLE: Record<Role, string> = {
-  customer: '/',
-  staff: '/kitchen',
-  admin: '/admin',
-}
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -56,6 +51,7 @@ export function LoginPage() {
       title={t('auth.welcomeBack')}
       subtitle={t('auth.loginSubtitle')}
     >
+      <GoogleSection text="signin_with" redirectTo={from} />
       <form className="fs-auth-form" onSubmit={onSubmit} noValidate>
         {login.isError && <ErrorBanner message={apiErrorMessage(login.error, t)} />}
         <Input

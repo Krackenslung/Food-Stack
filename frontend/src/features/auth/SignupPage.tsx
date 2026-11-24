@@ -18,7 +18,8 @@ import {
 import { api } from '../../lib/api/endpoints'
 import { apiErrorMessage, passwordStrength } from '../shared/helpers'
 import { AuthLayout } from './AuthLayout'
-import { HOME_BY_ROLE } from './LoginPage'
+import { GoogleSection } from './GoogleSection'
+import { HOME_BY_ROLE } from './homeByRole'
 import './AuthForms.css'
 
 type Errors = Partial<
@@ -84,6 +85,7 @@ export function SignupPage() {
       title={t('auth.createAccount')}
       subtitle={t('auth.signupSubtitle')}
     >
+      <GoogleSection text="signup_with" />
       <form className="fs-auth-form" onSubmit={onSubmit} noValidate>
         {signup.isError && <ErrorBanner message={apiErrorMessage(signup.error, t)} />}
         <div className="fs-auth-form__row">

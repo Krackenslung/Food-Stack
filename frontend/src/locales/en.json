@@ -393,7 +393,9 @@
       "name": "Enter your first name.",
       "lastname": "Enter your last name.",
       "terms": "You need to accept the terms to continue."
-    }
+    },
+    "orWithEmail": "or with email",
+    "continueWithGoogleDemo": "Continue with Google (demo)"
   },
   "errors": {
     "default": "Something went wrong. Please try again.",
@@ -420,6 +422,12 @@
     "PROMO_NOT_FOUND": "We don't recognize that promo code.",
     "PROMO_FIRST_ORDER_ONLY": "That code is only valid on your first order.",
     "CARD_DECLINED": "Your card was declined. Try another card.",
-    "ORDER_NOT_PAYABLE": "This order is not awaiting payment."
+    "ORDER_NOT_PAYABLE": "This order is not awaiting payment.",
+    "INVALID_GOOGLE_TOKEN": "We couldn't verify your Google sign-in. Please try again.",
+    "EMAIL_NOT_VERIFIED": "Your Google email address is not verified.",
+    "ACCOUNT_DISABLED": "This account is disabled.",
+    "ACCOUNT_LINKED_ELSEWHERE": "That email is already linked to a different Google account.",
+    "GOOGLE_UNAVAILABLE": "Google is unavailable right now. Try again in a moment.",
+    "GOOGLE_NOT_CONFIGURED": "Google sign-in is not set up yet."
   }
 }

@@ -393,7 +393,9 @@
       "name": "Escribe tu nombre.",
       "lastname": "Escribe tu apellido.",
       "terms": "Debes aceptar los términos para continuar."
-    }
+    },
+    "orWithEmail": "o con tu correo",
+    "continueWithGoogleDemo": "Continuar con Google (demo)"
   },
   "errors": {
     "default": "Algo salió mal. Inténtalo de nuevo.",
@@ -420,6 +422,12 @@
     "PROMO_NOT_FOUND": "No reconocemos ese código promocional.",
     "PROMO_FIRST_ORDER_ONLY": "Ese código solo vale en tu primer pedido.",
     "CARD_DECLINED": "Tu tarjeta fue rechazada. Prueba con otra.",
-    "ORDER_NOT_PAYABLE": "Este pedido no está esperando pago."
+    "ORDER_NOT_PAYABLE": "Este pedido no está esperando pago.",
+    "INVALID_GOOGLE_TOKEN": "No pudimos verificar tu inicio de sesión con Google. Inténtalo de nuevo.",
+    "EMAIL_NOT_VERIFIED": "Tu correo de Google no está verificado.",
+    "ACCOUNT_DISABLED": "Esta cuenta está deshabilitada.",
+    "ACCOUNT_LINKED_ELSEWHERE": "Ese correo ya está vinculado a otra cuenta de Google.",
+    "GOOGLE_UNAVAILABLE": "Google no está disponible por ahora. Inténtalo en un momento.",
+    "GOOGLE_NOT_CONFIGURED": "El inicio de sesión con Google aún no está configurado."
   }
 }

@@ -17,6 +17,7 @@ import { MOCK_CATEGORIES, MOCK_PRODUCTS, productIngredientId } from './catalog'
 import type { MockProduct } from './catalog'
 import { db } from './db'
 import type { MockOrder, MockUser } from './db'
+import { parseMockCredential } from './credential'
 import { MockValidationError, quoteCart } from './pricing'
 
 // Matches both the dev proxy ("/api/...") and an absolute VITE_API_BASE_URL.
@@ -314,6 +315,52 @@ export const handlers = [
     return ok({ user: publicUser(user) }, 201)
   }),
 
+  // Same rules as backend/Services/auth_service.py: verified email only, find by Google id, link
+  // by email, create customers, and the role always comes from the account, never the token.
+  http.post(route('/auth/google'), async ({ request }) => {
+    const { idToken } = (await request.json()) as { idToken?: string }
+    const claims = typeof idToken === 'string' ? parseMockCredential(idToken) : null
+    if (!claims?.sub || !claims.email) {
+      return fail('Invalid Google token.', 'INVALID_GOOGLE_TOKEN', 401)
+    }
+    if (claims.email_verified !== true) {
+      return fail('Your Google email is not verified.', 'EMAIL_NOT_VERIFIED', 401)
+    }
+
+    const users = db.users()
+    const email = claims.email.toLowerCase()
+    let user = users.find((u) => u.googleSub === claims.sub)
+    if (!user) {
+      const existing = users.find((u) => u.email.toLowerCase() === email)
+      if (existing) {
+        if (existing.googleSub && existing.googleSub !== claims.sub) {
+          return fail(
+            'That email is linked to another Google account.',
+            'ACCOUNT_LINKED_ELSEWHERE',
+            409,
+          )
+        }
+        existing.googleSub = claims.sub
+        user = existing
+      } else {
+        user = {
+          id: Math.max(0, ...users.map((u) => u.id)) + 1,
+          name: claims.given_name || email.split('@')[0],
+          lastname: claims.family_name || '',
+          email,
+          phoneNumber: '',
+          password: '',
+          role: 'customer',
+          googleSub: claims.sub,
+        }
+        users.push(user)
+      }
+      db.saveUsers(users)
+    }
+    db.setSession(user.id)
+    return ok({ user: publicUser(user) })
+  }),
+
   http.post(route('/auth/login'), async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string }
     const user = db
@@ -321,6 +368,7 @@ export const handlers = [
       .find(
         (u) =>
           u.email.toLowerCase() === String(body.email).toLowerCase() &&
+          u.password !== '' &&
           u.password === body.password,
       )
     if (!user) return fail('Invalid email or password.', 'INVALID_CREDENTIALS', 401)

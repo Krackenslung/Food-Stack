@@ -50,5 +50,8 @@ export const api = {
   signup: (body: SignupRequest) =>
     request<unknown>('/auth/signup', { method: 'POST', body, auth: false }),
 
+  googleLogin: (idToken: string) =>
+    request<unknown>('/auth/google', { method: 'POST', body: { idToken }, auth: false }),
+
   logout: () => request<unknown>('/auth/logout', { method: 'POST' }),
 }
