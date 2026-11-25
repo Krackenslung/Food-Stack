@@ -8,7 +8,7 @@ Proyecto full-stack con:
 
 - Python 3.11+
 - ODBC Driver 18 for SQL Server
-- SQL Server / Azure SQL con el esquema esperado por los modelos
+- SQL Server con el esquema esperado por los modelos
 
 ## 2. Instalación local
 
@@ -48,10 +48,10 @@ Con este modo, frontend y API comparten origen y la sesión autenticada funciona
 ### Frontend con Live Server (opcional)
 
 Puedes abrir `frontend/` con Live Server, pero:
-- se recomienda apuntar API a backend local o Azure mediante `runtime-config.js`
+- se recomienda apuntar API a un backend local mediante `runtime-config.js`
 - para QA real, preferir frontend servido por Flask para evitar problemas de sesión/cookies cross-origin
 
-## 5. Configuración del frontend (local vs Azure + demo mode)
+## 5. Configuración del frontend (local + demo mode)
 
 Archivo central: `frontend/js/runtime-config.js`
 
@@ -68,7 +68,7 @@ Opción A: editar `API_BASE_URL` en `runtime-config.js`.
 Opción B: desde consola del navegador:
 
 ```js
-localStorage.setItem('foodstack-api-base-url', 'https://TU-API.azurewebsites.net/api')
+localStorage.setItem('foodstack-api-base-url', 'https://TU-API.example.com/api')
 location.reload()
 ```
 
@@ -99,15 +99,10 @@ También puedes usar query string:
 - Signup público fuerza rol `customer` en backend (no confía en rol enviado por cliente).
 - Vistas staff validan sesión con backend (`/api/session`) y no solo con `localStorage`.
 
-## 7. Azure App Service
+## 7. Despliegue
 
-La raíz `/` ahora sirve `frontend/login.html` (ya no texto plano).
-Los endpoints siguen bajo `/api/*`.
-
-Verifica en Azure:
-- App Settings con variables de entorno SQL/JWT/FLASK.
-- Logs de app para errores de conexión SQL.
-- Deploy del repositorio completo (incluye carpeta `frontend`).
+FoodStack ya no se despliega en Azure y el nuevo destino aún no está definido; no hay job de deploy en CI.
+Los endpoints siguen bajo `/api/*`. Al elegir hosting: variables de entorno SQL/JWT/FLASK, logs de conexión SQL y `npm run build` en `frontend/` para que Flask sirva `frontend/dist`.
 
 ## 8. Checklist mínimo de smoke test
 
